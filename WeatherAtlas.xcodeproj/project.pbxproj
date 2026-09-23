@@ -1,0 +1,891 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0BB62028C497A3C3153E0B23 /* WeatherAPITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304F9FD3E3E8D8AF83E220B8 /* WeatherAPITests.swift */; };
+		0C766D4238923D64A9272AF4 /* WeatherAtlasApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AA821DAD2FC252B29C474B0 /* WeatherAtlasApp.swift */; };
+		118BF770E8B9F0449D3DC75E /* GolfTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAC5C57C46F95CE42D1F8AD3 /* GolfTests.swift */; };
+		12ADE33A17E56A916016D7DA /* ForecastSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6AAFC1C16287970F73D2216 /* ForecastSummary.swift */; };
+		2707FE808018DD05EFF9F16E /* WeatherAtlasWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 748B33D682E9D426DB26B698 /* WeatherAtlasWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		296254AC4F252B52C2C4C9FC /* WeatherAtlasWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB91E095841DE3D67A1F951 /* WeatherAtlasWidgets.swift */; };
+		31AF9921BF5E4920E2A4CFBD /* MapFeatures.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE7D3E785B14700C0B1D0C3F /* MapFeatures.swift */; };
+		3C89CC5DE3D80B56AECAE820 /* ForecastLocationName.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF50C81B39E965AC4EB98F74 /* ForecastLocationName.swift */; };
+		3DBA92B960EE702C4C975862 /* GolfUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56F6408AD64DB12DA08EC6D2 /* GolfUITests.swift */; };
+		438E3E8FBDF5C8046F012BE0 /* GolfScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A585BFE4C00E2DB38FC80B3F /* GolfScreen.swift */; };
+		49219EAA3810C9611BAA1352 /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADFE4845ECEB47A1A16090D4 /* AppStore.swift */; };
+		4A6456F55818CB309EF42757 /* MapAppearanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0665BEC80DC093260C117860 /* MapAppearanceTests.swift */; };
+		4DD8D0ABDA543385A5CCC570 /* MapPlaybackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58BF25E22022AF105D61C803 /* MapPlaybackTests.swift */; };
+		503534DD881DC517CD3CBB89 /* ForecastLocationMapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D67830AB3CE5C257CFA1C3B4 /* ForecastLocationMapTests.swift */; };
+		5961C91300324B19534A45BA /* MapAppearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F47FB9572BAD0E6DD5E5208 /* MapAppearance.swift */; };
+		5B83870F11BC3777BDAB7374 /* ForecastLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A47051DAF1DD526A26458281 /* ForecastLocation.swift */; };
+		6C717C8ACE296EC246164FCA /* ForecastScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3A2F854F136DF82F58C09AB /* ForecastScreen.swift */; };
+		6E9DBC7D170376D7DFFE3BF3 /* WeatherModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E594EAA66F1639EE222A261 /* WeatherModels.swift */; };
+		70311369146CD733C88B5545 /* ForecastLocationMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81C1AA9AD2432BFC1B4AA246 /* ForecastLocationMap.swift */; };
+		899DB6FB4FB5313715574872 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CCC97C1112C1EDE1C8D586A7 /* Assets.xcassets */; };
+		8F9ABD0425624E6467ACE1FF /* GolfDescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A507F63C39C29689D0115F /* GolfDescription.swift */; };
+		90FE96FF488C8FB0A1F2AF89 /* MapPlayback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 796EF860189351D16FCB9744 /* MapPlayback.swift */; };
+		9102A2E90C90955F53E2469C /* WeatherAtlasUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 854C8DF2D6BE605CA6F61161 /* WeatherAtlasUITests.swift */; };
+		99A722C18FA9253D43A9E5CF /* ForecastInsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52C40A5C80299B4A402898E6 /* ForecastInsightsView.swift */; };
+		9F895C1DC6E5118FAF01AD4D /* MapSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65EF36CD02A92F7851C8F239 /* MapSurface.swift */; };
+		A33AF1FF63C1262A30F45AE7 /* WeatherAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = B74EC00C970E5BFE7C627A9C /* WeatherAPI.swift */; };
+		A703AF46C1AB70888FEA66ED /* SettingsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C641EAA9C9C29A56FC444DE /* SettingsScreen.swift */; };
+		A9451E2C587A000E9D3293DA /* GolfNarrative.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AC923F767A14DE89ADEAF99 /* GolfNarrative.swift */; };
+		AB71BED30BE9669C6068B878 /* GolfSettingsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC7BDF04C57C959996AF369F /* GolfSettingsScreen.swift */; };
+		B294EC6C9ABACA8ACBE676B7 /* ForecastRefresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB7E8F6D49134B9A72488209 /* ForecastRefresh.swift */; };
+		B90E9511DEC10A3ADA7522A1 /* NaturalEarthCoastlines.geojson in Resources */ = {isa = PBXBuildFile; fileRef = C211C1D9D0DBB00F67819B0A /* NaturalEarthCoastlines.geojson */; };
+		BA74B979E0EE3753113084C9 /* ForecastSummaryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F2DAA529093219504E4DCA0 /* ForecastSummaryTests.swift */; };
+		BE119DD6C93FAE1DDBB5E8E5 /* ReferenceCoastlines.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66284BF8FA559AF262B9B7DD /* ReferenceCoastlines.swift */; };
+		C3662ED9F6C3A735131AB63B /* PermissionConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6081ACAF5D9A1055C8520EE /* PermissionConfigurationTests.swift */; };
+		D4A0FCFB4E0D079A37D59FC0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DF2409A98F53EDF2189954F /* ContentView.swift */; };
+		D6E6C6E91E0F5AE5CF6C6DBD /* MapScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54311D4172DE7F3F2FFE3136 /* MapScreen.swift */; };
+		DF1E042A756DDF05907519C5 /* CoastlineSource.txt in Resources */ = {isa = PBXBuildFile; fileRef = 82689BC2A39CEDD4F3FC2797 /* CoastlineSource.txt */; };
+		E4BF7E8A1E491DC86F855918 /* ForecastRefreshTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392FA965DE3CD44AC3FBA39F /* ForecastRefreshTests.swift */; };
+		E551522E4F81A0C742D9ECE5 /* ForecastLocationName.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF50C81B39E965AC4EB98F74 /* ForecastLocationName.swift */; };
+		E74DF90C8E9FA0C5B27CEC99 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 86E5A22C1C811A564978169F /* PrivacyInfo.xcprivacy */; };
+		E96C1094F1F64FA659F22F7F /* GolfModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C79A4206CA5C63735416C6F /* GolfModels.swift */; };
+		E9A8F6ACFB8A89A4742655C4 /* WeatherInsights.swift in Sources */ = {isa = PBXBuildFile; fileRef = D18E2D43E46DC3C42388BD6B /* WeatherInsights.swift */; };
+		F21D347BACE397B8F3EBD1C4 /* WidgetData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42AC39ED52733D4CDBF504E8 /* WidgetData.swift */; };
+		F2E70EB0C37110C37D66BDB5 /* WidgetData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42AC39ED52733D4CDBF504E8 /* WidgetData.swift */; };
+		F4061B808D07425AAC1C60FB /* WeatherInsightsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5074F574A67BA1100D68472 /* WeatherInsightsTests.swift */; };
+		F421A333B30AD5AA82FC4B76 /* SavedScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A5F59141190625D325810F8 /* SavedScreen.swift */; };
+		F9C4EAC6BEE2646B645006BD /* MapScreenModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C44B58C98FDCBCF058A56CA6 /* MapScreenModel.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		06C5E60E2413C40C286CD73E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = EB65309A4E968CAE1A9D18E5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5033F414A17F1E836D071855;
+			remoteInfo = WeatherAtlas;
+		};
+		91D54EE1F525072DEC52A68B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = EB65309A4E968CAE1A9D18E5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B4402641FE98A97FBE7D0F19;
+			remoteInfo = WeatherAtlasWidgets;
+		};
+		C8ED3BF77A27C8E69C81BFB7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = EB65309A4E968CAE1A9D18E5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5033F414A17F1E836D071855;
+			remoteInfo = WeatherAtlas;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		EADCB3D74D66ECDFBCB3A721 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				2707FE808018DD05EFF9F16E /* WeatherAtlasWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		0665BEC80DC093260C117860 /* MapAppearanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapAppearanceTests.swift; sourceTree = "<group>"; };
+		0E594EAA66F1639EE222A261 /* WeatherModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherModels.swift; sourceTree = "<group>"; };
+		2A5F59141190625D325810F8 /* SavedScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedScreen.swift; sourceTree = "<group>"; };
+		304F9FD3E3E8D8AF83E220B8 /* WeatherAPITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherAPITests.swift; sourceTree = "<group>"; };
+		392FA965DE3CD44AC3FBA39F /* ForecastRefreshTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForecastRefreshTests.swift; sourceTree = "<group>"; };
+		3C79A4206CA5C63735416C6F /* GolfModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GolfModels.swift; sourceTree = "<group>"; };
+		42AC39ED52733D4CDBF504E8 /* WidgetData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetData.swift; sourceTree = "<group>"; };
+		4AA821DAD2FC252B29C474B0 /* WeatherAtlasApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherAtlasApp.swift; sourceTree = "<group>"; };
+		4C641EAA9C9C29A56FC444DE /* SettingsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsScreen.swift; sourceTree = "<group>"; };
+		52C40A5C80299B4A402898E6 /* ForecastInsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForecastInsightsView.swift; sourceTree = "<group>"; };
+		54311D4172DE7F3F2FFE3136 /* MapScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapScreen.swift; sourceTree = "<group>"; };
+		56F6408AD64DB12DA08EC6D2 /* GolfUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GolfUITests.swift; sourceTree = "<group>"; };
+		58BF25E22022AF105D61C803 /* MapPlaybackTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPlaybackTests.swift; sourceTree = "<group>"; };
+		5C6F165BA3BD2D4C3B303BC0 /* WeatherAtlasUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = WeatherAtlasUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5DF2409A98F53EDF2189954F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		5EB91E095841DE3D67A1F951 /* WeatherAtlasWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherAtlasWidgets.swift; sourceTree = "<group>"; };
+		6139E8F332A4A92DC8619ED9 /* WeatherAtlasTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = WeatherAtlasTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		65EF36CD02A92F7851C8F239 /* MapSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapSurface.swift; sourceTree = "<group>"; };
+		66284BF8FA559AF262B9B7DD /* ReferenceCoastlines.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReferenceCoastlines.swift; sourceTree = "<group>"; };
+		6AC923F767A14DE89ADEAF99 /* GolfNarrative.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GolfNarrative.swift; sourceTree = "<group>"; };
+		6F2DAA529093219504E4DCA0 /* ForecastSummaryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForecastSummaryTests.swift; sourceTree = "<group>"; };
+		6F47FB9572BAD0E6DD5E5208 /* MapAppearance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapAppearance.swift; sourceTree = "<group>"; };
+		748B33D682E9D426DB26B698 /* WeatherAtlasWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = WeatherAtlasWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		796EF860189351D16FCB9744 /* MapPlayback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPlayback.swift; sourceTree = "<group>"; };
+		7E0D00988AEC91B4CB241D67 /* WeatherAtlas.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = WeatherAtlas.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		81C1AA9AD2432BFC1B4AA246 /* ForecastLocationMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForecastLocationMap.swift; sourceTree = "<group>"; };
+		82689BC2A39CEDD4F3FC2797 /* CoastlineSource.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CoastlineSource.txt; sourceTree = "<group>"; };
+		854C8DF2D6BE605CA6F61161 /* WeatherAtlasUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherAtlasUITests.swift; sourceTree = "<group>"; };
+		86E5A22C1C811A564978169F /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		A47051DAF1DD526A26458281 /* ForecastLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForecastLocation.swift; sourceTree = "<group>"; };
+		A585BFE4C00E2DB38FC80B3F /* GolfScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GolfScreen.swift; sourceTree = "<group>"; };
+		A6081ACAF5D9A1055C8520EE /* PermissionConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionConfigurationTests.swift; sourceTree = "<group>"; };
+		AAC5C57C46F95CE42D1F8AD3 /* GolfTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GolfTests.swift; sourceTree = "<group>"; };
+		ACA23BE9CE00339A6F8D1BD6 /* WeatherAtlas.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WeatherAtlas.entitlements; sourceTree = "<group>"; };
+		ADFE4845ECEB47A1A16090D4 /* AppStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStore.swift; sourceTree = "<group>"; };
+		AF50C81B39E965AC4EB98F74 /* ForecastLocationName.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForecastLocationName.swift; sourceTree = "<group>"; };
+		B74EC00C970E5BFE7C627A9C /* WeatherAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherAPI.swift; sourceTree = "<group>"; };
+		C0A507F63C39C29689D0115F /* GolfDescription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GolfDescription.swift; sourceTree = "<group>"; };
+		C211C1D9D0DBB00F67819B0A /* NaturalEarthCoastlines.geojson */ = {isa = PBXFileReference; path = NaturalEarthCoastlines.geojson; sourceTree = "<group>"; };
+		C3A2F854F136DF82F58C09AB /* ForecastScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForecastScreen.swift; sourceTree = "<group>"; };
+		C44B58C98FDCBCF058A56CA6 /* MapScreenModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapScreenModel.swift; sourceTree = "<group>"; };
+		C5074F574A67BA1100D68472 /* WeatherInsightsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherInsightsTests.swift; sourceTree = "<group>"; };
+		C7ED89DEE72B36E273D22F84 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		CB7E8F6D49134B9A72488209 /* ForecastRefresh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForecastRefresh.swift; sourceTree = "<group>"; };
+		CCC97C1112C1EDE1C8D586A7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		D18E2D43E46DC3C42388BD6B /* WeatherInsights.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherInsights.swift; sourceTree = "<group>"; };
+		D67830AB3CE5C257CFA1C3B4 /* ForecastLocationMapTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForecastLocationMapTests.swift; sourceTree = "<group>"; };
+		D991F9B870A4656392DC1783 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		DE7D3E785B14700C0B1D0C3F /* MapFeatures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapFeatures.swift; sourceTree = "<group>"; };
+		E6AAFC1C16287970F73D2216 /* ForecastSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForecastSummary.swift; sourceTree = "<group>"; };
+		EC7BDF04C57C959996AF369F /* GolfSettingsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GolfSettingsScreen.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		078754FBAF5A24507B1AD2E3 /* Golf */ = {
+			isa = PBXGroup;
+			children = (
+				C0A507F63C39C29689D0115F /* GolfDescription.swift */,
+				3C79A4206CA5C63735416C6F /* GolfModels.swift */,
+				6AC923F767A14DE89ADEAF99 /* GolfNarrative.swift */,
+				A585BFE4C00E2DB38FC80B3F /* GolfScreen.swift */,
+				EC7BDF04C57C959996AF369F /* GolfSettingsScreen.swift */,
+			);
+			path = Golf;
+			sourceTree = "<group>";
+		};
+		09277976C6B374FDFB72A6F6 /* WeatherAtlasWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				D991F9B870A4656392DC1783 /* Info.plist */,
+				5EB91E095841DE3D67A1F951 /* WeatherAtlasWidgets.swift */,
+			);
+			path = WeatherAtlasWidgets;
+			sourceTree = "<group>";
+		};
+		0C4EF1409A683BB900DD73E2 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A47051DAF1DD526A26458281 /* ForecastLocation.swift */,
+				CB7E8F6D49134B9A72488209 /* ForecastRefresh.swift */,
+				E6AAFC1C16287970F73D2216 /* ForecastSummary.swift */,
+				B74EC00C970E5BFE7C627A9C /* WeatherAPI.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		11E0203CC84CB9BADD34A596 /* WeatherAtlas */ = {
+			isa = PBXGroup;
+			children = (
+				2B7AA3C4820A7F3FA083BE49 /* App */,
+				BB9EB172196EA73ABA2A3503 /* Features */,
+				CD8378C6280B9C862B2263B1 /* Models */,
+				319A8F5AFA98A1E4CE063578 /* Resources */,
+				0C4EF1409A683BB900DD73E2 /* Services */,
+			);
+			path = WeatherAtlas;
+			sourceTree = "<group>";
+		};
+		24C35992DD2719AA87849166 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				AF50C81B39E965AC4EB98F74 /* ForecastLocationName.swift */,
+				ACA23BE9CE00339A6F8D1BD6 /* WeatherAtlas.entitlements */,
+				42AC39ED52733D4CDBF504E8 /* WidgetData.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		2B7AA3C4820A7F3FA083BE49 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				ADFE4845ECEB47A1A16090D4 /* AppStore.swift */,
+				5DF2409A98F53EDF2189954F /* ContentView.swift */,
+				4AA821DAD2FC252B29C474B0 /* WeatherAtlasApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		319A8F5AFA98A1E4CE063578 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				CCC97C1112C1EDE1C8D586A7 /* Assets.xcassets */,
+				82689BC2A39CEDD4F3FC2797 /* CoastlineSource.txt */,
+				C7ED89DEE72B36E273D22F84 /* Info.plist */,
+				C211C1D9D0DBB00F67819B0A /* NaturalEarthCoastlines.geojson */,
+				86E5A22C1C811A564978169F /* PrivacyInfo.xcprivacy */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		5B6DBCEA13240A49AB927AD6 = {
+			isa = PBXGroup;
+			children = (
+				24C35992DD2719AA87849166 /* Shared */,
+				11E0203CC84CB9BADD34A596 /* WeatherAtlas */,
+				608FFCB1084D2B96385027C4 /* WeatherAtlasTests */,
+				DDCAD977D172AD3867EDAE20 /* WeatherAtlasUITests */,
+				09277976C6B374FDFB72A6F6 /* WeatherAtlasWidgets */,
+				63E16B654243081EC0AB3FD5 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		608FFCB1084D2B96385027C4 /* WeatherAtlasTests */ = {
+			isa = PBXGroup;
+			children = (
+				D67830AB3CE5C257CFA1C3B4 /* ForecastLocationMapTests.swift */,
+				392FA965DE3CD44AC3FBA39F /* ForecastRefreshTests.swift */,
+				6F2DAA529093219504E4DCA0 /* ForecastSummaryTests.swift */,
+				AAC5C57C46F95CE42D1F8AD3 /* GolfTests.swift */,
+				0665BEC80DC093260C117860 /* MapAppearanceTests.swift */,
+				58BF25E22022AF105D61C803 /* MapPlaybackTests.swift */,
+				A6081ACAF5D9A1055C8520EE /* PermissionConfigurationTests.swift */,
+				304F9FD3E3E8D8AF83E220B8 /* WeatherAPITests.swift */,
+				C5074F574A67BA1100D68472 /* WeatherInsightsTests.swift */,
+			);
+			path = WeatherAtlasTests;
+			sourceTree = "<group>";
+		};
+		63E16B654243081EC0AB3FD5 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				7E0D00988AEC91B4CB241D67 /* WeatherAtlas.app */,
+				6139E8F332A4A92DC8619ED9 /* WeatherAtlasTests.xctest */,
+				5C6F165BA3BD2D4C3B303BC0 /* WeatherAtlasUITests.xctest */,
+				748B33D682E9D426DB26B698 /* WeatherAtlasWidgets.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7A422784F2CA106553187925 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				4C641EAA9C9C29A56FC444DE /* SettingsScreen.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		80E716A2D386A29D98E55E56 /* Saved */ = {
+			isa = PBXGroup;
+			children = (
+				2A5F59141190625D325810F8 /* SavedScreen.swift */,
+			);
+			path = Saved;
+			sourceTree = "<group>";
+		};
+		B16BBABD3925B5D39BBA44A8 /* Forecast */ = {
+			isa = PBXGroup;
+			children = (
+				52C40A5C80299B4A402898E6 /* ForecastInsightsView.swift */,
+				81C1AA9AD2432BFC1B4AA246 /* ForecastLocationMap.swift */,
+				C3A2F854F136DF82F58C09AB /* ForecastScreen.swift */,
+			);
+			path = Forecast;
+			sourceTree = "<group>";
+		};
+		BB9EB172196EA73ABA2A3503 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				B16BBABD3925B5D39BBA44A8 /* Forecast */,
+				078754FBAF5A24507B1AD2E3 /* Golf */,
+				CFA3DBD1D2D1699DC69B4DAE /* Map */,
+				80E716A2D386A29D98E55E56 /* Saved */,
+				7A422784F2CA106553187925 /* Settings */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		CD8378C6280B9C862B2263B1 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				DE7D3E785B14700C0B1D0C3F /* MapFeatures.swift */,
+				D18E2D43E46DC3C42388BD6B /* WeatherInsights.swift */,
+				0E594EAA66F1639EE222A261 /* WeatherModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		CFA3DBD1D2D1699DC69B4DAE /* Map */ = {
+			isa = PBXGroup;
+			children = (
+				6F47FB9572BAD0E6DD5E5208 /* MapAppearance.swift */,
+				796EF860189351D16FCB9744 /* MapPlayback.swift */,
+				54311D4172DE7F3F2FFE3136 /* MapScreen.swift */,
+				C44B58C98FDCBCF058A56CA6 /* MapScreenModel.swift */,
+				65EF36CD02A92F7851C8F239 /* MapSurface.swift */,
+				66284BF8FA559AF262B9B7DD /* ReferenceCoastlines.swift */,
+			);
+			path = Map;
+			sourceTree = "<group>";
+		};
+		DDCAD977D172AD3867EDAE20 /* WeatherAtlasUITests */ = {
+			isa = PBXGroup;
+			children = (
+				56F6408AD64DB12DA08EC6D2 /* GolfUITests.swift */,
+				854C8DF2D6BE605CA6F61161 /* WeatherAtlasUITests.swift */,
+			);
+			path = WeatherAtlasUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5033F414A17F1E836D071855 /* WeatherAtlas */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E1B614FE49A14D381002D2C6 /* Build configuration list for PBXNativeTarget "WeatherAtlas" */;
+			buildPhases = (
+				E066196D6083F0A23E1011B4 /* Sources */,
+				D0395996C44D1D22AF521163 /* Resources */,
+				EADCB3D74D66ECDFBCB3A721 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C27771B805E7FFE9F1BA524B /* PBXTargetDependency */,
+			);
+			name = WeatherAtlas;
+			packageProductDependencies = (
+			);
+			productName = WeatherAtlas;
+			productReference = 7E0D00988AEC91B4CB241D67 /* WeatherAtlas.app */;
+			productType = "com.apple.product-type.application";
+		};
+		95F3CD91455CA5E9C17C9985 /* WeatherAtlasTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = ADBB79DAB8936076C675A775 /* Build configuration list for PBXNativeTarget "WeatherAtlasTests" */;
+			buildPhases = (
+				D256B61BE36A840761B603CD /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				7C1B55A262BBF6A88CA402DA /* PBXTargetDependency */,
+			);
+			name = WeatherAtlasTests;
+			packageProductDependencies = (
+			);
+			productName = WeatherAtlasTests;
+			productReference = 6139E8F332A4A92DC8619ED9 /* WeatherAtlasTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		B4402641FE98A97FBE7D0F19 /* WeatherAtlasWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6CAB95612DA570D0CF9469EF /* Build configuration list for PBXNativeTarget "WeatherAtlasWidgets" */;
+			buildPhases = (
+				12A98D237BBD2A0D2251AE76 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = WeatherAtlasWidgets;
+			packageProductDependencies = (
+			);
+			productName = WeatherAtlasWidgets;
+			productReference = 748B33D682E9D426DB26B698 /* WeatherAtlasWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		C0368F49106050FAF34734E6 /* WeatherAtlasUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0F91B4A713FF80BF545D959E /* Build configuration list for PBXNativeTarget "WeatherAtlasUITests" */;
+			buildPhases = (
+				3707DA3EAD1EE45612F55725 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				52FFD3E81DC93C83E8103098 /* PBXTargetDependency */,
+			);
+			name = WeatherAtlasUITests;
+			packageProductDependencies = (
+			);
+			productName = WeatherAtlasUITests;
+			productReference = 5C6F165BA3BD2D4C3B303BC0 /* WeatherAtlasUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		EB65309A4E968CAE1A9D18E5 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					5033F414A17F1E836D071855 = {
+						DevelopmentTeam = QYPZ33246P;
+					};
+					B4402641FE98A97FBE7D0F19 = {
+						DevelopmentTeam = QYPZ33246P;
+					};
+					C0368F49106050FAF34734E6 = {
+						TestTargetID = 5033F414A17F1E836D071855;
+					};
+				};
+			};
+			buildConfigurationList = 0C0EDC99554285A151D6569C /* Build configuration list for PBXProject "WeatherAtlas" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 5B6DBCEA13240A49AB927AD6;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 63E16B654243081EC0AB3FD5 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5033F414A17F1E836D071855 /* WeatherAtlas */,
+				B4402641FE98A97FBE7D0F19 /* WeatherAtlasWidgets */,
+				95F3CD91455CA5E9C17C9985 /* WeatherAtlasTests */,
+				C0368F49106050FAF34734E6 /* WeatherAtlasUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		D0395996C44D1D22AF521163 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				899DB6FB4FB5313715574872 /* Assets.xcassets in Resources */,
+				DF1E042A756DDF05907519C5 /* CoastlineSource.txt in Resources */,
+				B90E9511DEC10A3ADA7522A1 /* NaturalEarthCoastlines.geojson in Resources */,
+				E74DF90C8E9FA0C5B27CEC99 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		12A98D237BBD2A0D2251AE76 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3C89CC5DE3D80B56AECAE820 /* ForecastLocationName.swift in Sources */,
+				296254AC4F252B52C2C4C9FC /* WeatherAtlasWidgets.swift in Sources */,
+				F21D347BACE397B8F3EBD1C4 /* WidgetData.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3707DA3EAD1EE45612F55725 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3DBA92B960EE702C4C975862 /* GolfUITests.swift in Sources */,
+				9102A2E90C90955F53E2469C /* WeatherAtlasUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D256B61BE36A840761B603CD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				503534DD881DC517CD3CBB89 /* ForecastLocationMapTests.swift in Sources */,
+				E4BF7E8A1E491DC86F855918 /* ForecastRefreshTests.swift in Sources */,
+				BA74B979E0EE3753113084C9 /* ForecastSummaryTests.swift in Sources */,
+				118BF770E8B9F0449D3DC75E /* GolfTests.swift in Sources */,
+				4A6456F55818CB309EF42757 /* MapAppearanceTests.swift in Sources */,
+				4DD8D0ABDA543385A5CCC570 /* MapPlaybackTests.swift in Sources */,
+				C3662ED9F6C3A735131AB63B /* PermissionConfigurationTests.swift in Sources */,
+				0BB62028C497A3C3153E0B23 /* WeatherAPITests.swift in Sources */,
+				F4061B808D07425AAC1C60FB /* WeatherInsightsTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E066196D6083F0A23E1011B4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				49219EAA3810C9611BAA1352 /* AppStore.swift in Sources */,
+				D4A0FCFB4E0D079A37D59FC0 /* ContentView.swift in Sources */,
+				99A722C18FA9253D43A9E5CF /* ForecastInsightsView.swift in Sources */,
+				5B83870F11BC3777BDAB7374 /* ForecastLocation.swift in Sources */,
+				70311369146CD733C88B5545 /* ForecastLocationMap.swift in Sources */,
+				E551522E4F81A0C742D9ECE5 /* ForecastLocationName.swift in Sources */,
+				B294EC6C9ABACA8ACBE676B7 /* ForecastRefresh.swift in Sources */,
+				6C717C8ACE296EC246164FCA /* ForecastScreen.swift in Sources */,
+				12ADE33A17E56A916016D7DA /* ForecastSummary.swift in Sources */,
+				8F9ABD0425624E6467ACE1FF /* GolfDescription.swift in Sources */,
+				E96C1094F1F64FA659F22F7F /* GolfModels.swift in Sources */,
+				A9451E2C587A000E9D3293DA /* GolfNarrative.swift in Sources */,
+				438E3E8FBDF5C8046F012BE0 /* GolfScreen.swift in Sources */,
+				AB71BED30BE9669C6068B878 /* GolfSettingsScreen.swift in Sources */,
+				5961C91300324B19534A45BA /* MapAppearance.swift in Sources */,
+				31AF9921BF5E4920E2A4CFBD /* MapFeatures.swift in Sources */,
+				90FE96FF488C8FB0A1F2AF89 /* MapPlayback.swift in Sources */,
+				D6E6C6E91E0F5AE5CF6C6DBD /* MapScreen.swift in Sources */,
+				F9C4EAC6BEE2646B645006BD /* MapScreenModel.swift in Sources */,
+				9F895C1DC6E5118FAF01AD4D /* MapSurface.swift in Sources */,
+				BE119DD6C93FAE1DDBB5E8E5 /* ReferenceCoastlines.swift in Sources */,
+				F421A333B30AD5AA82FC4B76 /* SavedScreen.swift in Sources */,
+				A703AF46C1AB70888FEA66ED /* SettingsScreen.swift in Sources */,
+				A33AF1FF63C1262A30F45AE7 /* WeatherAPI.swift in Sources */,
+				0C766D4238923D64A9272AF4 /* WeatherAtlasApp.swift in Sources */,
+				E9A8F6ACFB8A89A4742655C4 /* WeatherInsights.swift in Sources */,
+				6E9DBC7D170376D7DFFE3BF3 /* WeatherModels.swift in Sources */,
+				F2E70EB0C37110C37D66BDB5 /* WidgetData.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		52FFD3E81DC93C83E8103098 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5033F414A17F1E836D071855 /* WeatherAtlas */;
+			targetProxy = C8ED3BF77A27C8E69C81BFB7 /* PBXContainerItemProxy */;
+		};
+		7C1B55A262BBF6A88CA402DA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5033F414A17F1E836D071855 /* WeatherAtlas */;
+			targetProxy = 06C5E60E2413C40C286CD73E /* PBXContainerItemProxy */;
+		};
+		C27771B805E7FFE9F1BA524B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B4402641FE98A97FBE7D0F19 /* WeatherAtlasWidgets */;
+			targetProxy = 91D54EE1F525072DEC52A68B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		11D3125201401F13D88DDC4B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Shared/WeatherAtlas.entitlements;
+				DEVELOPMENT_TEAM = QYPZ33246P;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = WeatherAtlasWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ior.weatheratlas.widgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		16646406EB3B4B5F5420E485 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.weatheratlas.WeatherAtlasUITests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = WeatherAtlas;
+			};
+			name = Debug;
+		};
+		237D92B74CFEB420F4ECA513 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		607FCDAE81A4B76681684886 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.weatheratlas.WeatherAtlasTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WeatherAtlas.app/WeatherAtlas";
+			};
+			name = Release;
+		};
+		68AC7E25296C0628F632C063 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		7981D29AFD2257B5D401E1BE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = Shared/WeatherAtlas.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = QYPZ33246P;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = WeatherAtlas/Resources/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.weather";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ior.weatheratlas;
+				PRODUCT_MODULE_NAME = WeatherAtlas;
+				PRODUCT_NAME = WeatherAtlas;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		8734B94FDDDA2F08AE7D74D3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = Shared/WeatherAtlas.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = QYPZ33246P;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = WeatherAtlas/Resources/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.weather";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ior.weatheratlas;
+				PRODUCT_MODULE_NAME = WeatherAtlas;
+				PRODUCT_NAME = WeatherAtlas;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		AE2ABFBD0F1F395B540F02B5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.weatheratlas.WeatherAtlasUITests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = WeatherAtlas;
+			};
+			name = Release;
+		};
+		D7FFD55025D5460AF48B6FA4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.weatheratlas.WeatherAtlasTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WeatherAtlas.app/WeatherAtlas";
+			};
+			name = Debug;
+		};
+		ED364D5D8E671B17F88A0045 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Shared/WeatherAtlas.entitlements;
+				DEVELOPMENT_TEAM = QYPZ33246P;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = WeatherAtlasWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ior.weatheratlas.widgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0C0EDC99554285A151D6569C /* Build configuration list for PBXProject "WeatherAtlas" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				237D92B74CFEB420F4ECA513 /* Debug */,
+				68AC7E25296C0628F632C063 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		0F91B4A713FF80BF545D959E /* Build configuration list for PBXNativeTarget "WeatherAtlasUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				16646406EB3B4B5F5420E485 /* Debug */,
+				AE2ABFBD0F1F395B540F02B5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		6CAB95612DA570D0CF9469EF /* Build configuration list for PBXNativeTarget "WeatherAtlasWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				11D3125201401F13D88DDC4B /* Debug */,
+				ED364D5D8E671B17F88A0045 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		ADBB79DAB8936076C675A775 /* Build configuration list for PBXNativeTarget "WeatherAtlasTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D7FFD55025D5460AF48B6FA4 /* Debug */,
+				607FCDAE81A4B76681684886 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E1B614FE49A14D381002D2C6 /* Build configuration list for PBXNativeTarget "WeatherAtlas" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7981D29AFD2257B5D401E1BE /* Debug */,
+				8734B94FDDDA2F08AE7D74D3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = EB65309A4E968CAE1A9D18E5 /* Project object */;
+}

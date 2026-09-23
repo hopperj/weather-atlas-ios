@@ -1,0 +1,112 @@
+# Repository policy: docs/repository-content.md
+# Keep Swift source, assets, tests, documentation, project.yml, the Xcode project,
+# shared schemes/workspaces, entitlements, privacy manifests and dependency locks.
+
+# Xcode / SwiftPM build products, archives and test/profiling output.
+.build/
+build/
+Build/
+DerivedData/
+SourcePackages/
+Archives/
+*.xcarchive/
+*.xcresult/
+*.xcactivitylog
+*.ipa
+*.app/
+*.dSYM/
+*.dSYM.zip
+*.bcsymbolmap
+*.o
+*.swiftdoc
+*.swiftmodule
+*.swiftsourceinfo
+*.profraw
+*.profdata
+*.gcda
+*.gcno
+*.xccovreport
+*.xccovarchive
+
+# Per-user Xcode state; do NOT ignore the project/workspace or shared schemes.
+xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+IDEWorkspaceChecks.plist
+
+# Dependency downloads; keep Package.resolved, Podfile.lock and Cartfile.resolved.
+Pods/
+Carthage/Build/
+Carthage/Checkouts/
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Local signing material, App Store Connect credentials and environment settings.
+.env
+.env.*
+!.env.example
+!.env.*.example
+!.env.sample
+!.env.*.sample
+.envrc
+.netrc
+.ssh/
+/secrets/
+*.p8
+*.p12
+*.pfx
+*.key
+*.pem
+*.cer
+*.mobileprovision
+*.provisionprofile
+*.keychain
+*.keychain-db
+/ExportOptions.plist
+/ExportOptions-*.plist
+!/*ExportOptions*.example.plist
+
+# Generated distribution material, not the app's bundled asset catalog.
+/Screenshots/**
+!/Screenshots/**/
+!/Screenshots/**/README.md
+/Codex Image*.png
+/exports/
+/export/
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+# Local logs, temporary files, editor state and OS metadata.
+*.log
+*.log.*
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+/tmp/
+/temp/
+.tmp/
+.cache/
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.DS_Store
+._*
+.AppleDouble/
+.LSOverride
+Thumbs.db
+Desktop.ini

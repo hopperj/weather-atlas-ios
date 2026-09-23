@@ -1,0 +1,81 @@
+name: WeatherAtlas
+options:
+  bundleIdPrefix: com.weatheratlas
+  deploymentTarget:
+    iOS: "17.0"
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SUPPORTS_MACCATALYST: NO
+    SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+    SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: NO
+targets:
+  WeatherAtlas:
+    type: application
+    platform: iOS
+    # Info.plist owns the foreground-location purpose string. Networking is HTTPS-only.
+    # Resources/PrivacyInfo.xcprivacy is bundled by this source directory.
+    # The only explicit entitlement is the app group used by the widget.
+    sources:
+      - path: WeatherAtlas
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ior.weatheratlas
+        DEVELOPMENT_TEAM: QYPZ33246P
+        CODE_SIGN_IDENTITY: iPhone Developer
+        CODE_SIGN_ENTITLEMENTS: Shared/WeatherAtlas.entitlements
+        PRODUCT_MODULE_NAME: WeatherAtlas
+        INFOPLIST_FILE: WeatherAtlas/Resources/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "1"
+        PRODUCT_NAME: WeatherAtlas
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.weather
+    dependencies:
+      - target: WeatherAtlasWidgets
+        embed: true
+    scheme:
+      testTargets:
+        - WeatherAtlasTests
+        - WeatherAtlasUITests
+  WeatherAtlasWidgets:
+    type: app-extension
+    platform: iOS
+    # Fixed public HTTPS service; no local-network/location/background capability.
+    sources:
+      - path: Shared
+      - path: WeatherAtlasWidgets
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ior.weatheratlas.widgets
+        DEVELOPMENT_TEAM: QYPZ33246P
+        CODE_SIGN_ENTITLEMENTS: Shared/WeatherAtlas.entitlements
+        INFOPLIST_FILE: WeatherAtlasWidgets/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        SKIP_INSTALL: YES
+        APPLICATION_EXTENSION_API_ONLY: YES
+        TARGETED_DEVICE_FAMILY: "1"
+  WeatherAtlasTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: WeatherAtlasTests
+    dependencies:
+      - target: WeatherAtlas
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        TARGETED_DEVICE_FAMILY: "1"
+  WeatherAtlasUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: WeatherAtlasUITests
+    dependencies:
+      - target: WeatherAtlas
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        TARGETED_DEVICE_FAMILY: "1"

@@ -1,0 +1,17 @@
+Reference coastline artwork
+
+Natural Earth 1:10 million coastline, public domain.
+https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-coastline/
+https://www.naturalearthdata.com/about/terms-of-use/
+
+Unmodified GeoJSON downloaded during development on 2026-09-08 from:
+https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_coastline.geojson
+
+SHA-256:
+6f75ae0e0de157b14946e2255eb1f5486d9a13819032e26d4610852d296788f6
+
+The data is shipped in the app as static cartographic artwork. The app makes no
+Natural Earth network requests and performs no collection or geographic ETL.
+MapKit decodes the existing lines for display above the server's weather imagery.
+These generalised regional-scale lines fade out between map zooms 7.5 and 8.5
+to avoid implying street-level accuracy. Apple Maps supplies fine-scale geography.
