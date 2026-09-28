@@ -80,7 +80,7 @@ required. See [fixed HTTPS endpoint](docs/fixed-https-endpoint.md).
 
 ## Implemented
 
-- Build 1.1 (22) brings the web forecast page's visual hierarchy to iPhone. A
+- Build 1.2 (24) brings the web forecast page's visual hierarchy to iPhone. A
   current-conditions card now leads with the nearest fresh observation, followed
   by horizontally scrolling next-24-hours cards and compact seven-day rows whose
   condition icon is the second column. Day and night precipitation messages are
@@ -91,9 +91,11 @@ required. See [fixed HTTPS endpoint](docs/fixed-https-endpoint.md).
   x-axis keeps daily `00` labels at full range, then adds progressively denser
   hour ticks as the view zooms toward six hours.
   Nearby observations are loaded once and shown below the forecasts, and the new
-  layout adapts for accessibility text sizes. Verified with 182 passing unit tests
-  (6 opt-in tests skipped), focused simulator UI checks, and an unsigned simulator
-  build.
+  layout adapts for accessibility text sizes. The map now presents its current
+  dataset in a clearly labelled **Choose map data** card with an explicit change
+  action and a clearly labelled model-source menu. Verified with
+  182 unit tests (176 passing and 6 opt-in tests skipped), focused simulator UI
+  checks, and an unsigned simulator build.
 - Build 1.0 (21) adds **About Weather Atlas** at the top of Settings. The
   offline-readable page introduces the Canadian-made app, its Environment and
   Climate Change Canada forecast/model data, interactive weather across Canada,

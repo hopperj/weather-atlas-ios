@@ -122,15 +122,29 @@ struct MapScreen: View {
                 ForEach(option.sources) { Text($0.description).tag($0.product.code) }
               }
             } label: {
-              HStack(spacing: 4) {
-                Text(model.selectedProductCode.uppercased())
-                Image(systemName: "chevron.down").font(.caption.bold())
-              }.font(.subheadline).padding(.vertical, 10)
+              VStack(alignment: .leading, spacing: 3) {
+                Text("Model")
+                  .font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+                HStack(spacing: 4) {
+                  Text(model.selectedProductCode.uppercased())
+                  Image(systemName: "chevron.down").font(.caption.bold())
+                }.font(.subheadline.weight(.semibold))
+              }
+              .padding(.horizontal, 10).padding(.vertical, 8)
+              .background(
+                Color(.secondarySystemGroupedBackground),
+                in: RoundedRectangle(cornerRadius: 11)
+              )
+              .overlay(
+                RoundedRectangle(cornerRadius: 11).stroke(Color.secondary.opacity(0.22)))
             }
             .accessibilityLabel("Model: \(model.selectedProductCode.uppercased())")
             .accessibilityIdentifier("mapModelPicker")
           }
-        }.padding(.horizontal)
+        }
+        .padding(.horizontal)
+        .padding(.top, 2)
+        .padding(.bottom, 12)
       }
     }.background(.regularMaterial)
   }
@@ -139,14 +153,34 @@ struct MapScreen: View {
     Button {
       showingLayers = true
     } label: {
-      HStack {
-        Text(model.title).font(.subheadline.bold())
+      HStack(spacing: 10) {
+        Image(systemName: "square.stack.3d.up")
+          .font(.body.weight(.semibold))
+          .foregroundStyle(.tint)
+          .frame(width: 28, height: 28)
+          .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+        VStack(alignment: .leading, spacing: 2) {
+          Text("Choose map data").font(.caption).foregroundStyle(.secondary)
+          Text(model.title).font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
+            .lineLimit(2)
+        }
         Spacer(minLength: 4)
-        Image(systemName: "chevron.down").font(.caption.bold())
-      }.padding(.vertical, 10).contentShape(Rectangle())
+        Text("Change").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+        Image(systemName: "chevron.right").font(.caption.bold()).foregroundStyle(.tertiary)
+      }
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .padding(.horizontal, 12)
+      .padding(.vertical, 10)
+      .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
+      .overlay(
+        RoundedRectangle(cornerRadius: 12).stroke(Color.secondary.opacity(0.18))
+      )
+      .contentShape(Rectangle())
     }
     .buttonStyle(.plain)
+    .frame(maxWidth: .infinity)
     .accessibilityLabel("Choose map data: \(model.title)")
+    .accessibilityHint("Opens all available weather variables and observations")
     .accessibilityIdentifier("mapDataPicker")
   }
 
@@ -229,7 +263,9 @@ struct MapScreen: View {
             }.font(.caption2)
           }
           .accessibilityElement(children: .ignore)
-          .accessibilityLabel("Wind speed in metres per second: blue 0, green 10, orange 20, red 30, purple 40 or more.")
+          .accessibilityLabel(
+            "Wind speed in metres per second: blue 0, green 10, orange 20, red 30, purple 40 or more."
+          )
           .accessibilityIdentifier("windSpeedLegend")
           Text("Arrow colour and size show wind speed at 10 m. Tap an arrow for its speed.")
             .font(.caption2).foregroundStyle(.secondary)
