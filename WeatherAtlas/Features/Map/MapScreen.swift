@@ -207,7 +207,31 @@ struct MapScreen: View {
         Text(model.sourceLabel).font(.caption2).foregroundStyle(
           .secondary)
         if model.showWind {
-          Text("Larger arrows indicate stronger wind at 10 m. Tap an arrow for its speed.")
+          VStack(spacing: 3) {
+            LinearGradient(
+              stops: MapAppearance.windSpeedColours.map {
+                Gradient.Stop(
+                  color: Color(hex: $0.hex),
+                  location: Double($0.speed) / Double(MapAppearance.windMaxColourSpeed))
+              }, startPoint: .leading, endPoint: .trailing
+            )
+            .frame(height: 6).clipShape(Capsule())
+            HStack {
+              Text("0")
+              Spacer()
+              Text("10")
+              Spacer()
+              Text("20")
+              Spacer()
+              Text("30")
+              Spacer()
+              Text("40+ m/s")
+            }.font(.caption2)
+          }
+          .accessibilityElement(children: .ignore)
+          .accessibilityLabel("Wind speed in metres per second: blue 0, green 10, orange 20, red 30, purple 40 or more.")
+          .accessibilityIdentifier("windSpeedLegend")
+          Text("Arrow colour and size show wind speed at 10 m. Tap an arrow for its speed.")
             .font(.caption2).foregroundStyle(.secondary)
         }
       } else if model.isImagery {

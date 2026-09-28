@@ -1383,8 +1383,13 @@ final class WeatherAtlasUITests: XCTestCase {
     XCTAssertTrue(app.staticTexts["Temperature"].waitForExistence(timeout: 10))
     selectMapData("wind", search: "Wind direction", in: app)
     XCTAssertTrue(
-      app.staticTexts["Larger arrows indicate stronger wind at 10 m. Tap an arrow for its speed."]
+      app.staticTexts["Arrow colour and size show wind speed at 10 m. Tap an arrow for its speed."]
         .waitForExistence(timeout: 5))
+    XCTAssertTrue(app.otherElements["windSpeedLegend"].exists)
+    let windScreenshot = XCTAttachment(screenshot: app.screenshot())
+    windScreenshot.name = "Speed-coloured wind arrows"
+    windScreenshot.lifetime = .keepAlways
+    add(windScreenshot)
     selectMapData("hotspots", search: "Fire", in: app)
     XCTAssertTrue(app.staticTexts["hotspotAttribution"].waitForExistence(timeout: 5))
     XCTAssertTrue(app.buttons["hotspotDatePicker"].exists)

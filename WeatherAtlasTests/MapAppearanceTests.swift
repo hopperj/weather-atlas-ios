@@ -63,4 +63,46 @@ final class MapAppearanceTests: XCTestCase {
     XCTAssertEqual(view.transform.b, 1, accuracy: 0.0001)
     XCTAssertEqual(view.annotation?.title, "10 m/s")
   }
+
+  func testWindColoursMatchLegendAndClampWithoutTreatingUnknownAsCalm() {
+    for stop in MapAppearance.windSpeedColours {
+      XCTAssertEqual(MapAppearance.windColourHex(speed: Double(stop.speed)), stop.hex)
+    }
+    XCTAssertEqual(MapAppearance.windColourHex(speed: 2), "#1b77c3")
+    XCTAssertEqual(MapAppearance.windColourHex(speed: 2.9), MapAppearance.windColourHex(speed: 2))
+    XCTAssertEqual(MapAppearance.windColourHex(speed: 200), MapAppearance.windColourHex(speed: 40))
+    for value: Double? in [nil, .nan, .infinity, -.infinity, -1] {
+      XCTAssertNil(MapAppearance.windColourIndex(speed: value))
+      XCTAssertEqual(MapAppearance.windColourHex(speed: value), "#243746")
+    }
+    XCTAssertNotEqual(MapAppearance.windColourHex(speed: nil), MapAppearance.windColourHex(speed: 0))
+  }
+
+  @MainActor func testColourImagesAreCachedByBothSizeAndSpeed() throws {
+    // These speeds have the same rounded size but must still have different fills.
+    XCTAssertEqual(MapAppearance.windSize(speed: 3), MapAppearance.windSize(speed: 4))
+    let slower = MapAppearance.windImage(speed: 3)
+    let faster = MapAppearance.windImage(speed: 4)
+    XCTAssertFalse(slower === faster)
+    XCTAssertNotEqual(slower.pngData(), faster.pngData())
+    XCTAssertTrue(slower === MapAppearance.windImage(speed: 3.1))
+    XCTAssertTrue(MapAppearance.windImage(speed: 100) === MapAppearance.windImage(speed: 200))
+    XCTAssertNotEqual(MapAppearance.windImage(speed: nil).pngData(), MapAppearance.windImage(speed: 18).pngData())
+  }
+
+  @MainActor func testWindImageContainsSpeedColourAndWhiteOutline() throws {
+    let image = try XCTUnwrap(MapAppearance.windImage(speed: 20).cgImage)
+    let width = image.width
+    let height = image.height
+    var pixels = [UInt8](repeating: 0, count: width * height * 4)
+    let context = try XCTUnwrap(CGContext(
+      data: &pixels, width: width, height: height, bitsPerComponent: 8,
+      bytesPerRow: width * 4, space: CGColorSpaceCreateDeviceRGB(),
+      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+    context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+    let colours = stride(from: 0, to: pixels.count, by: 4).map { Array(pixels[$0..<($0 + 4)]) }
+    XCTAssertTrue(colours.contains([234, 88, 12, 255]))
+    XCTAssertTrue(colours.contains([255, 255, 255, 255]))
+    XCTAssertTrue(colours.contains([0, 0, 0, 0]))
+  }
 }
