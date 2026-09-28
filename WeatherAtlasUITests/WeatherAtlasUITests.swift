@@ -217,7 +217,7 @@ final class WeatherAtlasUITests: XCTestCase {
     XCTAssertEqual(location.label, "Stop using my location")
   }
 
-  @MainActor func testCompactForecastHeaderKeepsMapAndSavingAvailable() {
+  @MainActor func testCurrentConditionsHeaderKeepsMapAndSavingAvailable() {
     let app = XCUIApplication()
     app.launchArguments = [
       "-weatherAtlasTestServerURL", "http://localhost:8097",
@@ -228,18 +228,21 @@ final class WeatherAtlasUITests: XCTestCase {
     dismissLocationPromptForManualForecast()
     let header = app.descendants(matching: .any).matching(identifier: "forecastHeader").firstMatch
     XCTAssertTrue(header.waitForExistence(timeout: 15))
-    XCTAssertEqual(
-      header.staticTexts.count, 3,
-      "Only location, issue time and map button text belong in the card")
     XCTAssertEqual(header.staticTexts["forecastLocationName"].label, "Halifax")
-    XCTAssertTrue(header.staticTexts["forecastIssuedAt"].label.hasPrefix("Issued "))
+    XCTAssertTrue(header.staticTexts["forecastIssuedAt"].label.hasPrefix("Forecast issued "))
+    XCTAssertEqual(
+      header.staticTexts["currentForecastTemperature"].label, "Current temperature 14.5 degrees")
+    XCTAssertTrue(header.staticTexts["currentForecastCondition"].label.contains("Periods of rain"))
+    XCTAssertTrue(header.staticTexts["currentObservationStation"].label.contains("Shearwater"))
     XCTAssertTrue(header.buttons["Show on map"].isHittable)
-    XCTAssertLessThan(header.frame.height, 130)
+    XCTAssertGreaterThan(header.frame.height, 250)
+    XCTAssertLessThan(header.frame.height, 380)
     XCTAssertFalse(header.buttons["Save or unsave Halifax"].exists)
     XCTAssertTrue(app.navigationBars.buttons["Save or unsave Halifax"].isHittable)
-    XCTAssertTrue(app.staticTexts["forecast-temperature-Today"].isHittable)
+    XCTAssertTrue(app.staticTexts["Next 24 hours"].exists)
+    XCTAssertTrue(app.descendants(matching: .any)["hourlyForecastCard-0"].exists)
     let screenshot = XCTAttachment(screenshot: app.screenshot())
-    screenshot.name = "Compact forecast header and collapsed observations"
+    screenshot.name = "Current conditions and 24-hour forecast"
     screenshot.lifetime = .keepAlways
     add(screenshot)
     app.navigationBars.buttons["Save or unsave Halifax"].tap()
@@ -368,6 +371,7 @@ final class WeatherAtlasUITests: XCTestCase {
     XCTAssertTrue(issue.waitForExistence(timeout: 15))
     let map = app.buttons["Show on map"]
     XCTAssertGreaterThan(map.frame.minY, issue.frame.maxY)
+    for _ in 0..<3 where !map.isHittable { app.swipeUp() }
     XCTAssertTrue(map.isHittable)
     XCTAssertLessThanOrEqual(map.frame.maxX, app.frame.maxX - 16)
     let screenshot = XCTAttachment(screenshot: app.screenshot())
@@ -404,6 +408,8 @@ final class WeatherAtlasUITests: XCTestCase {
     XCTAssertFalse(station.exists)
     XCTAssertFalse(
       app.staticTexts["Distances from this forecast region's representative point."].exists)
+    for _ in 0..<8 where !observations.isHittable { app.swipeUp() }
+    XCTAssertTrue(observations.isHittable)
     observations.tap()
     XCTAssertTrue(station.waitForExistence(timeout: 10))
     XCTAssertEqual(observations.value as? String, "Expanded")
@@ -411,11 +417,15 @@ final class WeatherAtlasUITests: XCTestCase {
     XCTAssertFalse(station.exists)
     observations.tap()
     XCTAssertTrue(station.waitForExistence(timeout: 5))
+    for _ in 0..<8 where !changes.isHittable { app.swipeDown() }
+    XCTAssertTrue(changes.isHittable)
     changes.tap()
     XCTAssertEqual(
       observations.value as? String, "Expanded",
       "Nearby observations must expand independently of the insight buttons")
     changes.tap()
+    for _ in 0..<8 where !station.isHittable { app.swipeUp() }
+    XCTAssertTrue(station.isHittable)
     station.tap()
     XCTAssertTrue(app.navigationBars["Shearwater"].waitForExistence(timeout: 5))
     XCTAssertTrue(app.staticTexts["Trace"].exists)
@@ -688,7 +698,7 @@ final class WeatherAtlasUITests: XCTestCase {
       let picker = app.segmentedControls["forecastViewPicker"]
       XCTAssertTrue(picker.waitForExistence(timeout: 10))
       let warm = expectation(
-        for: NSPredicate(format: "label == %@", "Precipitation: 2.4 mm"),
+        for: NSPredicate(format: "label == %@", "Night precipitation amount: 2.4 mm"),
         evaluatedWith: app.staticTexts["precipitation-Tonight"])
       await fulfillment(of: [warm], timeout: 10)
       for (offset, mode) in [(1, "Daily / Nightly"), (2, "Hourly · 72h")] {
@@ -777,7 +787,7 @@ final class WeatherAtlasUITests: XCTestCase {
     }
   }
 
-  @MainActor func testDailyAndNightlyWeatherIconsAppearBesideTemperatures() {
+  @MainActor func testDailyWeatherIconsUseTheSecondColumn() {
     let app = XCUIApplication()
     app.launchArguments = [
       "-weatherAtlasTestServerURL", "http://localhost:8097",
@@ -788,21 +798,19 @@ final class WeatherAtlasUITests: XCTestCase {
     dismissLocationPromptForManualForecast()
     XCTAssertTrue(app.segmentedControls["forecastViewPicker"].waitForExistence(timeout: 10))
     let rain = app.images["forecast-condition-Today"]
-    let tonight = app.images["forecast-condition-Tonight"]
-    for _ in 0..<3 {
-      if tonight.isHittable { break }
+    for _ in 0..<5 {
+      if rain.isHittable { break }
       app.swipeUp()
     }
     XCTAssertEqual(rain.label, "Rain")
-    XCTAssertEqual(tonight.label, "Partly cloudy")
-    for name in ["Today", "Tonight"] {
-      let icon = app.images["forecast-condition-\(name)"]
-      let temperature = app.staticTexts["forecast-temperature-\(name)"]
-      XCTAssertLessThan(icon.frame.maxX, temperature.frame.minX)
-      XCTAssertEqual(icon.frame.midY, temperature.frame.midY, accuracy: 8)
-    }
+    let day = app.staticTexts["forecast-day-Today"]
+    let temperature = app.staticTexts["forecast-temperature-Today"]
+    XCTAssertLessThan(day.frame.maxX, rain.frame.minX)
+    XCTAssertLessThan(rain.frame.maxX, temperature.frame.minX)
+    XCTAssertTrue(app.staticTexts["forecast-low-temperature-Today"].exists)
+    XCTAssertFalse(app.images["forecast-condition-Tonight"].exists)
     let screenshot = XCTAttachment(screenshot: app.screenshot())
-    screenshot.name = "Daily and nightly weather icons beside temperatures"
+    screenshot.name = "Seven-day forecast with icons in the second column"
     screenshot.lifetime = .keepAlways
     add(screenshot)
   }
@@ -1082,7 +1090,7 @@ final class WeatherAtlasUITests: XCTestCase {
     // Wait for a complete warm snapshot, including model precipitation amounts.
     let amount = app.staticTexts["precipitation-Tonight"]
     let warm = expectation(
-      for: NSPredicate(format: "label == %@", "Precipitation: 2.4 mm"),
+      for: NSPredicate(format: "label == %@", "Night precipitation amount: 2.4 mm"),
       evaluatedWith: amount)
     await fulfillment(of: [warm], timeout: 10)
     app.terminate()
@@ -1092,7 +1100,8 @@ final class WeatherAtlasUITests: XCTestCase {
     XCTAssertTrue(app.staticTexts["precipitation-Today"].waitForExistence(timeout: 2))
     XCTAssertFalse(app.staticTexts["savedForecastNotice"].exists)
     assertNoForecastLoadingIndicators(app)
-    XCTAssertEqual(app.staticTexts["precipitation-Today"].label, "Precipitation: 5 to 10 mm")
+    XCTAssertEqual(
+      app.staticTexts["precipitation-Today"].label, "Day precipitation amount: 5 to 10 mm")
     let shot = XCTAttachment(screenshot: app.screenshot())
     shot.name = "Instant saved forecast while network refresh is delayed"
     shot.lifetime = .keepAlways
@@ -1253,6 +1262,44 @@ final class WeatherAtlasUITests: XCTestCase {
     XCTAssertEqual(app.staticTexts.matching(identifier: "hourlyForecastTime").count, 72)
   }
 
+  @MainActor func testHourlyChartPinchZoomsAndShowsTheFullRangeAgain() {
+    let app = XCUIApplication()
+    app.launchArguments = [
+      "-weatherAtlasTestServerURL", "http://localhost:8097",
+      "-forecastRegion:http://localhost:8097", "0123456789abcdef",
+    ]
+    app.launch()
+    dismissLocationPromptForManualForecast()
+    let picker = app.segmentedControls["forecastViewPicker"]
+    XCTAssertTrue(picker.waitForExistence(timeout: 10))
+    picker.buttons["Hourly · 72h"].tap()
+
+    let chart = app.otherElements["hourlyForecastChart"]
+    XCTAssertTrue(chart.waitForExistence(timeout: 10))
+    for _ in 0..<3 where !chart.isHittable { app.swipeUp() }
+    XCTAssertTrue(chart.isHittable)
+    let viewport = app.staticTexts["hourlyChartViewport"]
+    XCTAssertEqual(viewport.label, "Full range")
+    let showAll = app.buttons["hourlyChartShowAll"]
+    XCTAssertFalse(showAll.isEnabled)
+
+    chart.pinch(withScale: 2, velocity: 1)
+    let zoomed = NSPredicate(format: "label != %@", "Full range")
+    expectation(for: zoomed, evaluatedWith: viewport)
+    waitForExpectations(timeout: 5)
+    XCTAssertTrue(viewport.label.hasSuffix("-hour view"))
+    XCTAssertTrue(showAll.isEnabled)
+    let screenshot = XCTAttachment(screenshot: app.screenshot())
+    screenshot.name = "Hourly chart pinch zoom"
+    screenshot.lifetime = .keepAlways
+    add(screenshot)
+
+    chart.swipeLeft()
+    showAll.tap()
+    XCTAssertEqual(viewport.label, "Full range")
+    XCTAssertFalse(showAll.isEnabled)
+  }
+
   @MainActor func testHalifaxFallbackWhenLocationIsDenied() {
     let app = XCUIApplication()
     app.launchArguments = [
@@ -1316,15 +1363,17 @@ final class WeatherAtlasUITests: XCTestCase {
     let daily = picker.buttons["Daily / Nightly"]
     let hourly = picker.buttons["Hourly · 72h"]
     XCTAssertTrue(daily.isSelected)
-    XCTAssertTrue(app.staticTexts["The week ahead"].exists)
+    XCTAssertTrue(app.staticTexts["Next 24 hours"].exists)
+    XCTAssertTrue(app.staticTexts["7-day forecast"].exists)
     XCTAssertFalse(app.staticTexts["Next 72 hours"].exists)
     XCTAssertGreaterThan(picker.frame.minY, app.buttons["Show on map"].frame.maxY)
-    XCTAssertLessThan(picker.frame.maxY, app.staticTexts["The week ahead"].frame.minY)
+    XCTAssertLessThan(picker.frame.maxY, app.staticTexts["Next 24 hours"].frame.minY)
 
     hourly.tap()
     XCTAssertTrue(hourly.isSelected)
     XCTAssertTrue(app.staticTexts["Next 72 hours"].waitForExistence(timeout: 5))
-    XCTAssertFalse(app.staticTexts["The week ahead"].exists)
+    XCTAssertFalse(app.staticTexts["Next 24 hours"].exists)
+    XCTAssertFalse(app.staticTexts["7-day forecast"].exists)
     XCTAssertFalse(app.staticTexts["precipitation-Today"].exists)
     XCTAssertTrue(
       app.staticTexts["ECCC GDPS · 71 of 72 complete hours"].waitForExistence(timeout: 10))
@@ -1336,7 +1385,8 @@ final class WeatherAtlasUITests: XCTestCase {
 
     daily.tap()
     XCTAssertTrue(daily.isSelected)
-    XCTAssertTrue(app.staticTexts["The week ahead"].exists)
+    XCTAssertTrue(app.staticTexts["Next 24 hours"].exists)
+    XCTAssertTrue(app.staticTexts["7-day forecast"].exists)
     XCTAssertTrue(app.staticTexts["precipitation-Today"].exists)
     XCTAssertFalse(app.staticTexts["Next 72 hours"].exists)
     XCTAssertEqual(app.staticTexts.matching(identifier: "hourlyForecastTime").count, 0)
@@ -1347,12 +1397,17 @@ final class WeatherAtlasUITests: XCTestCase {
     app.launchArguments = [
       "-weatherAtlasTestServerURL", "http://localhost:8097",
       "-forecastRegion:http://localhost:8097", "0123456789abcdef",
+      "-forecastSnapshot:v1:http://localhost:8097:manual", "",
     ]
     app.launch()
     XCTAssertTrue(app.staticTexts["precipitation-Today"].waitForExistence(timeout: 10))
-    XCTAssertEqual(app.staticTexts["precipitation-Today"].label, "Precipitation: 5 to 10 mm")
+    XCTAssertEqual(
+      app.staticTexts["precipitation-Today"].label, "Day precipitation amount: 5 to 10 mm")
+    XCTAssertEqual(
+      app.staticTexts["precipitation-likelihood-Today"].label,
+      "Day precipitation: Rain expected")
     let estimated = app.staticTexts["precipitation-Tonight"]
-    let loaded = NSPredicate(format: "label == %@", "Precipitation: 2.4 mm")
+    let loaded = NSPredicate(format: "label == %@", "Night precipitation amount: 2.4 mm")
     expectation(for: loaded, evaluatedWith: estimated)
     waitForExpectations(timeout: 10)
     for _ in 0..<5 {
@@ -1360,11 +1415,26 @@ final class WeatherAtlasUITests: XCTestCase {
       app.swipeUp()
     }
     XCTAssertEqual(
-      app.staticTexts["precipitation-Tuesday"].label, "Precipitation: amount unavailable")
-    XCTAssertFalse(app.staticTexts["precipitation-Tuesday night"].exists)
+      app.staticTexts["precipitation-Tuesday"].label,
+      "Day precipitation amount: amount unavailable")
+    XCTAssertEqual(
+      app.staticTexts["precipitation-Tuesday night"].label,
+      "Night precipitation amount: 0 mm")
     XCTAssertEqual(
       app.staticTexts["precipitation-Wednesday"].label,
-      "Precipitation: <0.1 mm")
+      "Day precipitation amount: <0.1 mm")
+    XCTAssertEqual(
+      app.staticTexts["precipitation-likelihood-Wednesday"].label,
+      "Day precipitation: Snow expected")
+    for _ in 0..<3 where !app.staticTexts["precipitation-Wednesday night"].isHittable {
+      app.swipeUp()
+    }
+    XCTAssertEqual(
+      app.staticTexts["precipitation-Wednesday night"].label,
+      "Night precipitation amount: 2.4 mm")
+    XCTAssertEqual(
+      app.staticTexts["precipitation-likelihood-Wednesday night"].label,
+      "Night precipitation: Rain or snow expected")
     let screenshot = XCTAttachment(screenshot: app.screenshot())
     screenshot.name = "Precipitation amounts"
     screenshot.lifetime = .keepAlways

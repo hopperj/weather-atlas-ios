@@ -80,6 +80,20 @@ required. See [fixed HTTPS endpoint](docs/fixed-https-endpoint.md).
 
 ## Implemented
 
+- Build 1.1 (22) brings the web forecast page's visual hierarchy to iPhone. A
+  current-conditions card now leads with the nearest fresh observation, followed
+  by horizontally scrolling next-24-hours cards and compact seven-day rows whose
+  condition icon is the second column. Day and night precipitation messages are
+  explicitly labelled so similar outlooks cannot be confused. The existing
+  **What changed?** comparison and interactive **Hourly · 72h** plot remain
+  available in the same forecast screen. The hourly plot supports horizontal
+  pinch-to-zoom, sideways panning, accessible zoom buttons and one-tap reset. Its
+  x-axis keeps daily `00` labels at full range, then adds progressively denser
+  hour ticks as the view zooms toward six hours.
+  Nearby observations are loaded once and shown below the forecasts, and the new
+  layout adapts for accessibility text sizes. Verified with 182 passing unit tests
+  (6 opt-in tests skipped), focused simulator UI checks, and an unsigned simulator
+  build.
 - Build 1.0 (21) adds **About Weather Atlas** at the top of Settings. The
   offline-readable page introduces the Canadian-made app, its Environment and
   Climate Change Canada forecast/model data, interactive weather across Canada,
@@ -282,13 +296,20 @@ required. See [fixed HTTPS endpoint](docs/fixed-https-endpoint.md).
   first partial day so its label is not dropped. There are no invented data points
   before the forecast starts. Calendar-day stepping handles 23/25-hour days during
   daylight-saving changes, and axis dates stay the same when switching measurements.
-- Every day/night period with a nonzero precipitation chance shows an amount,
-  a loading state, or "amount unavailable". Issued amounts take priority; missing
-  amounts use the server's /api/v1/forecast/precipitation totals when complete.
+- Day/night precipitation amounts are independent of whether ECCC publishes a
+  numeric probability. Issued amounts take priority; missing amounts use the
+  server's /api/v1/forecast/precipitation totals when complete, including periods
+  with no POP. Numeric probabilities (including 0%) are retained; recognized wet
+  bulletin descriptions without a percentage show "Rain expected", "Rain possible"
+  or the corresponding snow/mixed-precipitation wording. No percentage is inferred.
+  Dry/unrecognized descriptions without POP do not get an unexplained probability
+  dash. Wet periods without a usable total retain an explicit unavailable state.
   Amounts appear without a repeated "model estimate" suffix; a shared note explains
   the model source and water-equivalent units. Totals are matched to the same
   region, bulletin and period. The phone never adds up hourly rainfall. A missing
   value is not zero, and trace estimates below 0.1 mm are shown as <0.1 mm.
+  Verified 2026-09-23 with 172 passing unit tests (6 opt-in tests skipped), the
+  precipitation-card simulator UI test, and an unsigned Release iPhone build.
 - Server settings, locally saved favorites scoped to each server, accessible
   controls, dynamic system typography and light/dark appearance.
 
@@ -349,7 +370,8 @@ Unit tests also cover the corrected default, one-time port migration and saved-p
 preservation, bundled primary icon metadata and device-family targeting for iPhone, location
 permission/lifecycle, manual forecast persistence, missing
 coverage, and late responses after a manual selection. Precipitation tests cover
-issued ranges and snow units, missing/zero/trace amounts, bulletin matching,
+issued ranges and snow units, omitted POP with complete model totals,
+conservative wet-weather wording, missing/zero/trace amounts, bulletin matching,
 independent request failures and late responses after changing locations. UI
 coverage verifies the Daily / Nightly and Hourly toggle below the map button,
 all 72 hourly rows, and switching back to the daily precipitation cards. Hourly plot

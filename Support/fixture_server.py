@@ -47,7 +47,7 @@ REGION = dict(id="0123456789abcdef", name="Halifax Metro", latitude=44.65, longi
               periods=[dict(name=["Today", "Tonight", "Tuesday", "Tuesday night", "Wednesday", "Wednesday night", "Thursday"][i],
                             start=time(12*i), end=time(12*(i+1)), temperatureC=22 if i % 2 == 0 else 14,
                             temperatureClass="high" if i % 2 == 0 else "low", relativeHumidityPercent=65,
-                            popPercent=0 if i == 3 else 30,
+                            popPercent=0 if i == 3 else None if i in (0, 4, 5) else 30,
                             precipitationAmount="5 to 10 mm" if i == 0 else None,
                             condition=["Periods of rain.", "Partly cloudy.", "Cloudy.", "Clear.",
                                        "Snow.", "Rain mixed with snow.", "Chance of thunderstorms."][i])
@@ -279,7 +279,7 @@ class Handler(BaseHTTPRequestHandler):
                         source="ECCC GDPS", generatedAt=time(), periods=[
                             dict(start=period["start"], end=period["end"],
                                  status="official" if i == 0 else "missing" if i == 2 else "complete",
-                                 precipitationMm=None if i in (0, 2) else 0.05 if i == 4 else 2.4,
+                                 precipitationMm=None if i in (0, 2) else 0 if i == 3 else 0.05 if i == 4 else 2.4,
                                  runTime=None if i in (0, 2) else time(-6))
                             for i, period in enumerate(REGION["periods"])])
         elif path == "/api/v1/imagery":

@@ -4,9 +4,7 @@ import SwiftUI
 @MainActor
 final class ForecastInsightsModel: ObservableObject {
   @Published private(set) var changes: ForecastChanges?
-  @Published private(set) var stations: [WeatherStation] = []
   @Published private(set) var changesMessage: String?
-  @Published private(set) var stationsMessage: String?
   private var generation = 0
   private var regionID: String?
 
@@ -15,14 +13,10 @@ final class ForecastInsightsModel: ObservableObject {
     let ticket = generation
     if regionID != region.id {
       changes = nil
-      stations = []
       changesMessage = nil
-      stationsMessage = nil
       regionID = region.id
     }
-    async let changeTask: () = loadChanges(region: region, api: api, ticket: ticket)
-    async let stationTask: () = loadStations(region: region, api: api, ticket: ticket)
-    _ = await (changeTask, stationTask)
+    await loadChanges(region: region, api: api, ticket: ticket)
   }
   private func loadChanges(region: ForecastRegion, api: WeatherAPI, ticket: Int) async {
     do {
@@ -37,22 +31,6 @@ final class ForecastInsightsModel: ObservableObject {
         ? "Forecast comparisons aren't available yet." : "Could not refresh the comparison."
     }
   }
-  private func loadStations(region: ForecastRegion, api: WeatherAPI, ticket: Int) async {
-    do {
-      let result = try await api.nearbyStations(
-        longitude: region.longitude, latitude: region.latitude)
-      guard !Task.isCancelled, ticket == generation else { return }
-      stations = result.items
-      stationsMessage =
-        result.items.isEmpty
-        ? "No collected stations within 100 km of this forecast location." : nil
-    } catch {
-      guard !Task.isCancelled, ticket == generation else { return }
-      stationsMessage =
-        stations.isEmpty
-        ? "Nearby observations aren't available yet." : "Could not refresh the observations."
-    }
-  }
 }
 
 struct ForecastInsightsView: View {
@@ -64,8 +42,6 @@ struct ForecastInsightsView: View {
   @StateObject private var model = ForecastInsightsModel()
   @StateObject private var changesSummary = ForecastSummaryModel()
   @State private var expandedInsight: InsightDisclosure?
-  @State private var observationsExpanded = false
-  @State private var selectedStation: WeatherStation?
   private var changesExpanded: Bool { expandedInsight == .changes }
   private var summaryExpanded: Bool { expandedInsight == .summary }
   private var changesInput: ForecastSummaryInput {
@@ -85,43 +61,6 @@ struct ForecastInsightsView: View {
       }
       if changesExpanded { changesDetails }
       if summaryExpanded { summaryDetails }
-      VStack(alignment: .leading, spacing: 14) {
-        Button {
-          observationsExpanded.toggle()
-        } label: {
-          HStack {
-            Text("Nearby observations").font(.headline)
-            Spacer()
-            Image(systemName: observationsExpanded ? "chevron.up" : "chevron.down")
-              .font(.caption.weight(.semibold)).foregroundStyle(.tint)
-          }
-          .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Nearby observations")
-        .accessibilityValue(observationsExpanded ? "Expanded" : "Collapsed")
-        .accessibilityHint(
-          observationsExpanded ? "Hide nearby station readings" : "Show nearby station readings"
-        )
-        .accessibilityIdentifier("nearbyObservations")
-        if observationsExpanded {
-          Text("Distances from this forecast region's representative point.")
-            .font(.caption2).foregroundStyle(.secondary)
-          ForEach(model.stations.prefix(3)) { station in
-            Button {
-              selectedStation = station
-            } label: {
-              StationSummary(station: station)
-            }
-            .buttonStyle(.plain)
-          }
-          if let message = model.stationsMessage {
-            Text(message).font(.caption).foregroundStyle(.secondary)
-          }
-        }
-      }
-      .padding().background(
-        Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
     }
     .task(id: "\(region.id)-\(region.issuedAt)-\(store.forecastRefresh)-\(scenePhase)") {
       guard scenePhase == .active else { return }
@@ -145,7 +84,6 @@ struct ForecastInsightsView: View {
       changesSummary.prepare(input)
     }
     .onDisappear { changesSummary.cancel() }
-    .sheet(item: $selectedStation) { StationDetailView(station: $0, api: store.api) }
   }
 
   private var summaryStatus: String {
@@ -265,6 +203,53 @@ struct ForecastInsightsView: View {
     .padding().background(
       Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16)
     )
+  }
+}
+
+struct NearbyObservationsView: View {
+  let stations: [WeatherStation]
+  let message: String?
+  let api: WeatherAPI
+  @State private var expanded = false
+  @State private var selectedStation: WeatherStation?
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 14) {
+      Button {
+        expanded.toggle()
+      } label: {
+        HStack {
+          Label("Nearby observations", systemImage: "location.magnifyingglass")
+            .font(.headline)
+          Spacer()
+          Image(systemName: expanded ? "chevron.up" : "chevron.down")
+            .font(.caption.weight(.semibold)).foregroundStyle(.tint)
+        }
+        .contentShape(Rectangle())
+      }
+      .buttonStyle(.plain)
+      .accessibilityLabel("Nearby observations")
+      .accessibilityValue(expanded ? "Expanded" : "Collapsed")
+      .accessibilityHint(expanded ? "Hide nearby station readings" : "Show nearby station readings")
+      .accessibilityIdentifier("nearbyObservations")
+      if expanded {
+        Text("Distances from this forecast region's representative point.")
+          .font(.caption2).foregroundStyle(.secondary)
+        ForEach(stations.prefix(3)) { station in
+          Button {
+            selectedStation = station
+          } label: {
+            StationSummary(station: station)
+          }
+          .buttonStyle(.plain)
+        }
+        if let message { Text(message).font(.caption).foregroundStyle(.secondary) }
+      }
+    }
+    .padding().background(
+      Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16)
+    )
+    .sheet(item: $selectedStation) { StationDetailView(station: $0, api: api) }
   }
 }
 

@@ -205,19 +205,57 @@ struct ForecastPeriod: Codable, Hashable, Identifiable, Sendable {
   }
 
   var needsPrecipitationEstimate: Bool {
-    (popPercent ?? 0) > 0 && issuedPrecipitationAmount == nil
+    // An omitted probability is not zero. Amounts are a separate server product.
+    issuedPrecipitationAmount == nil
+  }
+
+  var precipitationLikelihoodDescription: String? {
+    if let pop = popPercent, pop.isFinite, (0...100).contains(pop) {
+      return "\(pop.formatted(.number.precision(.fractionLength(0))))%"
+    }
+    return precipitationOutlookDescription
+  }
+
+  private var precipitationOutlookDescription: String? {
+    // Restate recognized bulletin wording, never infer a numerical probability.
+    // Keep this conservative: unrecognized/negated descriptions remain untouched.
+    var text = condition.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+      .trimmingCharacters(in: CharacterSet(charactersIn: "."))
+    let possible = text.hasPrefix("chance of ") || text.hasPrefix("risk of ")
+    for prefix in ["chance of ", "risk of ", "periods of ", "a few "] {
+      if text.hasPrefix(prefix) { text.removeFirst(prefix.count) }
+    }
+    let kind: String
+    switch text {
+    case "rain", "showers", "rain showers", "drizzle", "rain or drizzle", "drizzle or rain",
+      "showers or drizzle":
+      kind = "Rain"
+    case "snow", "wet snow", "flurries", "snow flurries", "snow showers", "snow and blowing snow":
+      kind = "Snow"
+    case "rain or snow", "snow or rain", "rain mixed with snow", "snow mixed with rain",
+      "wet snow mixed with rain", "flurries or rain showers", "rain showers or flurries",
+      "rain showers or wet flurries":
+      kind = "Rain or snow"
+    case "freezing rain": kind = "Freezing rain"
+    case "freezing drizzle": kind = "Freezing drizzle"
+    case "ice pellets", "sleet": kind = "Ice pellets"
+    case "thunderstorms", "thundershowers": kind = "Thunderstorms"
+    case "hail": kind = "Hail"
+    default: return nil
+    }
+    return "\(kind) \(possible ? "possible" : "expected")"
   }
 
   func precipitationDescription(estimatedMm: Double?, loading: Bool = false) -> String? {
     // Keep issued ranges and units, including snow depth, exactly as supplied.
     if let amount = issuedPrecipitationAmount { return "Precipitation: \(amount)" }
-    guard needsPrecipitationEstimate else { return nil }
     if let amount = estimatedMm, amount.isFinite, amount >= 0 {
       let number =
         amount > 0 && amount < 0.1
         ? "<0.1" : amount.formatted(.number.precision(.fractionLength(0...1)))
       return "Precipitation: \(number) mm"
     }
+    guard (popPercent ?? 0) > 0 || precipitationOutlookDescription != nil else { return nil }
     return loading ? "Precipitation: loading amount…" : "Precipitation: amount unavailable"
   }
 }
@@ -388,8 +426,20 @@ struct HourlyDayAxis {
     let style = Date.FormatStyle(
       date: .omitted, time: .omitted, locale: locale, calendar: calendar,
       timeZone: calendar.timeZone)
+    let hour = String(format: "%02d", calendar.component(.hour, from: date))
     return date.formatted(style.weekday(.abbreviated)) + "\n"
-      + date.formatted(style.month(.abbreviated).day())
+      + date.formatted(style.month(.abbreviated).day()) + " \(hour)"
+  }
+}
+
+/// The full range stays uncluttered; progressively closer views expose more hourly detail.
+struct HourlyChartScale {
+  static func hourStride(visibleDuration: TimeInterval, fullDuration: TimeInterval) -> Int? {
+    guard fullDuration > 0, visibleDuration < fullDuration * 0.995 else { return nil }
+    if visibleDuration > 48 * 3_600 { return 12 }
+    if visibleDuration > 24 * 3_600 { return 6 }
+    if visibleDuration > 12 * 3_600 { return 3 }
+    return 1
   }
 }
 

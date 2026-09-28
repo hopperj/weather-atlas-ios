@@ -417,9 +417,9 @@ final class ForecastPresentationTests: XCTestCase {
     XCTAssertEqual(axis.domain.lowerBound, axis.ticks.first)
     XCTAssertEqual(axis.domain.upperBound, end)
     XCTAssertEqual(
-      axis.label(for: axis.ticks[0], locale: Locale(identifier: "en_US")), "Mon\nSep 7")
+      axis.label(for: axis.ticks[0], locale: Locale(identifier: "en_US")), "Mon\nSep 7 00")
     XCTAssertEqual(
-      axis.label(for: axis.ticks[3], locale: Locale(identifier: "en_US")), "Thu\nSep 10")
+      axis.label(for: axis.ticks[3], locale: Locale(identifier: "en_US")), "Thu\nSep 10 00")
   }
 
   func testMidnightEndDoesNotLabelAnExtraEmptyDay() {
@@ -454,7 +454,20 @@ final class ForecastPresentationTests: XCTestCase {
     XCTAssertEqual(axis.ticks.count, 4)
     XCTAssertEqual(axis.ticks[1], date("2027-01-01T00:00:00-04:00"))
     XCTAssertEqual(
-      axis.label(for: axis.ticks[1], locale: Locale(identifier: "en_US")), "Fri\nJan 1")
+      axis.label(for: axis.ticks[1], locale: Locale(identifier: "en_US")), "Fri\nJan 1 00")
+  }
+
+  func testHourlyChartAddsTicksProgressivelyAsTheVisibleRangeShrinks() {
+    let full = 84 * 3_600.0
+    XCTAssertNil(HourlyChartScale.hourStride(visibleDuration: full, fullDuration: full))
+    XCTAssertEqual(
+      HourlyChartScale.hourStride(visibleDuration: 60 * 3_600, fullDuration: full), 12)
+    XCTAssertEqual(
+      HourlyChartScale.hourStride(visibleDuration: 36 * 3_600, fullDuration: full), 6)
+    XCTAssertEqual(
+      HourlyChartScale.hourStride(visibleDuration: 18 * 3_600, fullDuration: full), 3)
+    XCTAssertEqual(
+      HourlyChartScale.hourStride(visibleDuration: 6 * 3_600, fullDuration: full), 1)
   }
 
   func testEmptyIntervalStillHasAValidChartDomain() {
@@ -874,11 +887,40 @@ final class ForecastBehaviorTests: XCTestCase {
 final class PrecipitationBehaviorTests: XCTestCase {
   private let issuedAt = Date(timeIntervalSince1970: 1_788_768_000)
 
-  private func period(pop: Double? = 30, amount: String? = nil) -> ForecastPeriod {
+  private func period(
+    pop: Double? = 30, amount: String? = nil, condition: String = "Chance of showers"
+  ) -> ForecastPeriod {
     ForecastPeriod(
       name: "Today", start: issuedAt, end: issuedAt.addingTimeInterval(43_200),
       temperatureC: 22, temperatureClass: "high", relativeHumidityPercent: 65,
-      popPercent: pop, precipitationAmount: amount, condition: "Chance of showers")
+      popPercent: pop, precipitationAmount: amount, condition: condition)
+  }
+
+  func testUnpublishedProbabilityUsesBulletinWordingNotAnInventedPercentage() {
+    let cases: [(String, String?)] = [
+      ("Periods of rain", "Rain expected"), ("Showers", "Rain expected"),
+      ("A few showers.", "Rain expected"), (" Periods of drizzle or rain. ", "Rain expected"),
+      ("Chance of showers", "Rain possible"), ("Risk of thunderstorms", "Thunderstorms possible"),
+      ("Snow", "Snow expected"), ("Periods of snow", "Snow expected"),
+      ("Rain mixed with snow", "Rain or snow expected"),
+      ("Chance of rain showers or wet flurries", "Rain or snow possible"),
+      ("Freezing rain", "Freezing rain expected"), ("Ice pellets", "Ice pellets expected"),
+      ("Sunny", nil), ("Cloudy", nil), ("", nil), ("No rain", nil),
+      ("Blowing snow", nil), ("Rain ending then clearing", nil),
+    ]
+    for (condition, expected) in cases {
+      XCTAssertEqual(
+        period(pop: nil, condition: condition).precipitationLikelihoodDescription, expected,
+        condition)
+    }
+    for pop in [0.0, 30, 80, 100] {
+      XCTAssertEqual(
+        period(pop: pop, condition: "Rain").precipitationLikelihoodDescription, "\(Int(pop))%")
+    }
+    for invalid in [-1, 101, Double.nan, Double.infinity] {
+      XCTAssertEqual(
+        period(pop: invalid, condition: "Rain").precipitationLikelihoodDescription, "Rain expected")
+    }
   }
 
   func testIssuedAmountsKeepRangesSnowUnitsAndZero() {
@@ -895,7 +937,7 @@ final class PrecipitationBehaviorTests: XCTestCase {
   }
 
   func testWetPeriodsAlwaysShowAnAmountStateAndDryPeriodsDoNotInventOne() {
-    for pop in [1.0, 30, 100] {
+    for pop in [nil, 1.0, 30, 100] as [Double?] {
       XCTAssertEqual(
         period(pop: pop).precipitationDescription(estimatedMm: nil),
         "Precipitation: amount unavailable")
@@ -904,10 +946,26 @@ final class PrecipitationBehaviorTests: XCTestCase {
         "Precipitation: loading amount…")
     }
     for pop in [0, nil] as [Double?] {
-      XCTAssertNil(period(pop: pop).precipitationDescription(estimatedMm: nil))
-      XCTAssertFalse(period(pop: pop).needsPrecipitationEstimate)
+      let dry = period(pop: pop, condition: "Sunny")
+      XCTAssertNil(dry.precipitationDescription(estimatedMm: nil))
+      XCTAssertTrue(dry.needsPrecipitationEstimate)
+      XCTAssertEqual(dry.precipitationDescription(estimatedMm: 0), "Precipitation: 0 mm")
     }
     XCTAssertTrue(period(amount: " \n ").needsPrecipitationEstimate)
+  }
+
+  func testModelAmountsAreIndependentOfProbabilityAndCondition() {
+    for pop in [nil, 0, 30] as [Double?] {
+      for condition in ["Periods of rain", "Showers", "Snow", "Sunny", ""] {
+        let forecast = period(pop: pop, condition: condition)
+        XCTAssertTrue(forecast.needsPrecipitationEstimate)
+        XCTAssertEqual(
+          forecast.precipitationDescription(estimatedMm: 10.16), "Precipitation: 10.2 mm")
+        XCTAssertEqual(
+          forecast.precipitationDescription(estimatedMm: 0.05), "Precipitation: <0.1 mm")
+        XCTAssertEqual(forecast.precipitationDescription(estimatedMm: 0), "Precipitation: 0 mm")
+      }
+    }
   }
 
   func testEstimatesDistinguishTraceZeroAndMissingAmounts() {
@@ -991,8 +1049,22 @@ final class PrecipitationBehaviorTests: XCTestCase {
     XCTAssertTrue(calls.contains("precipitation:chosen"))
   }
 
-  @MainActor func testNoEstimateRequestWhenDryOrAnIssuedAmountExists() async {
-    let api = ForecastTestServer(periods: [period(pop: 0), period(amount: "5 to 10 mm")])
+  @MainActor func testServerAmountsLoadEvenWhenEveryPeriodOmitsProbability() async {
+    let rainy = period(pop: nil, condition: "Periods of rain")
+    let api = ForecastTestServer(periods: [rainy])
+    let model = ForecastModel(api: api)
+    await model.load(preferredID: "chosen", location: nil)
+    let calls = await api.calls
+    XCTAssertTrue(calls.contains("precipitation:chosen"))
+    XCTAssertEqual(model.precipitationDescription(for: rainy), "Precipitation: 12 mm")
+    XCTAssertTrue(model.hasPrecipitationEstimates)
+    XCTAssertFalse(model.refreshIncomplete)
+  }
+
+  @MainActor func testNoEstimateRequestWhenEveryPeriodHasAnIssuedAmount() async {
+    let api = ForecastTestServer(periods: [
+      period(pop: 0, amount: "0 mm"), period(pop: nil, amount: "5 to 10 mm"),
+    ])
     let model = ForecastModel(api: api)
     await model.load(preferredID: "chosen", location: nil)
     let calls = await api.calls
@@ -1002,8 +1074,9 @@ final class PrecipitationBehaviorTests: XCTestCase {
   }
 
   @MainActor func testFailedPrecipitationDoesNotHideTheDailyOrHourlyForecast() async {
+    let rainy = period(pop: nil, condition: "Periods of rain")
     let api = ForecastTestServer(
-      periods: [period()], precipitationError: .server(status: 404, message: "Not Found"))
+      periods: [rainy], precipitationError: .server(status: 404, message: "Not Found"))
     let model = ForecastModel(api: api)
     await model.load(preferredID: "chosen", location: nil)
     XCTAssertEqual(model.region?.id, "chosen")
@@ -1012,7 +1085,8 @@ final class PrecipitationBehaviorTests: XCTestCase {
     XCTAssertNil(model.precipitation)
     XCTAssertFalse(model.precipitationLoading)
     XCTAssertEqual(
-      model.precipitationDescription(for: period()), "Precipitation: amount unavailable")
+      model.precipitationDescription(for: rainy), "Precipitation: amount unavailable")
+    XCTAssertEqual(model.region?.periods.first?.precipitationLikelihoodDescription, "Rain expected")
   }
 
   @MainActor func testFailedHourlyForecastDoesNotHidePrecipitation() async {
