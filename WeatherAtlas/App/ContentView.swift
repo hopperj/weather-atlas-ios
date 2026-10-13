@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
   @StateObject private var store: AppStore
   @StateObject private var location = ForecastLocation()
+  @StateObject private var connection = ForecastConnectionMonitor()
   @Environment(\.scenePhase) private var scenePhase
   @State private var hasOpenedMap = false
   init(configuration: AppConfiguration) {
@@ -42,6 +43,16 @@ struct ContentView: View {
     .onAppear { WeatherDiagnostics.startup.notice("Forecast root appeared") }
     .onOpenURL { store.openWidgetURL($0) }
     .onChange(of: store.selectedTab) { _, tab in if tab == 0 { hasOpenedMap = true } }
+    .onChange(of: connection.online, initial: true) { _, online in
+      store.forecast.networkAvailable = online
+    }
+    .task(id: connection.reconnectRevision) {
+      guard connection.reconnectRevision > 0 && scenePhase == .active else { return }
+      while store.forecast.isRefreshing {
+        do { try await Task.sleep(for: .milliseconds(250)) } catch { return }
+      }
+      if scenePhase == .active && connection.online { store.refreshForecast() }
+    }
     .background {
       ForecastLoader(model: store.forecast, location: location, enabled: scenePhase == .active)
         .id(store.serverURL)

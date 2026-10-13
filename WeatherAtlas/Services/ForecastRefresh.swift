@@ -1,4 +1,31 @@
+import Combine
 import Foundation
+import Network
+
+/// A reconnect refreshes weather without requesting GPS or changing the selected region.
+@MainActor final class ForecastConnectionMonitor: ObservableObject {
+  @Published private(set) var online = true
+  @Published private(set) var reconnectRevision = 0
+  private var previousStatus: Bool?
+  private let monitor = NWPathMonitor()
+
+  init(startMonitoring: Bool = true) {
+    guard startMonitoring else { return }
+    monitor.pathUpdateHandler = { [weak self] path in
+      let connected = path.status == .satisfied
+      Task { @MainActor [weak self] in self?.updateConnection(connected) }
+    }
+    monitor.start(queue: DispatchQueue(label: "weatheratlas.forecast-connectivity"))
+  }
+
+  func updateConnection(_ connected: Bool) {
+    if previousStatus == false && connected { reconnectRevision += 1 }
+    previousStatus = connected
+    online = connected
+  }
+
+  deinit { monitor.cancel() }
+}
 
 struct ForecastSnapshot: Codable {
   let storedAt: Date
@@ -64,6 +91,38 @@ struct ForecastRequest: Hashable {
 
 enum ForecastRefreshPolicy {
   static let interval: Duration = .seconds(300)
+
+  static func currentRegion(_ region: ForecastRegion, at now: Date) -> ForecastRegion {
+    let periods = region.periods.filter { $0.end > now }
+    return ForecastRegion(
+      id: region.id, name: region.name, latitude: region.latitude, longitude: region.longitude,
+      province: region.province, provinceName: region.provinceName, issuedAt: region.issuedAt,
+      stale: region.stale || now.timeIntervalSince(region.issuedAt) > 86400 || periods.isEmpty,
+      periods: periods, locality: region.locality,
+      briefing: region.briefing.flatMap { $0.validUntil > now ? $0 : nil })
+  }
+
+  static func upcomingHourly(_ forecast: HourlyForecast?, at now: Date) -> HourlyForecast? {
+    guard let forecast else { return nil }
+    let start = Date(timeIntervalSince1970: floor(now.timeIntervalSince1970 / 3600) * 3600)
+    let hours = forecast.hours.filter { $0.time >= start }
+    guard let first = hours.first else { return nil }
+    return HourlyForecast(
+      regionId: forecast.regionId, source: forecast.source, generatedAt: forecast.generatedAt,
+      start: first.time, end: forecast.end,
+      availableHours: hours.filter { $0.status != "missing" }.count,
+      completeHours: hours.filter { $0.status == "complete" }.count, hours: hours)
+  }
+
+  static func dayTitle(for period: ForecastPeriod, at now: Date, calendar: Calendar = .current)
+    -> String
+  {
+    if calendar.isDate(period.start, inSameDayAs: now) { return "Today" }
+    var style = Date.FormatStyle.dateTime.weekday(.abbreviated)
+    style.calendar = calendar
+    style.timeZone = calendar.timeZone
+    return period.start.formatted(style)
+  }
 
   /// GPS can start immediately, but its arrival must not cancel the only request
   /// that can put a first bulletin on screen. Failures release the gate as well.

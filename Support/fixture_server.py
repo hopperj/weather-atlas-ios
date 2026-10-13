@@ -93,7 +93,9 @@ def golf_fixture(query):
                               for f in ("temperature", "wind", "rain", "pop")])
                  for name, a, b in [("Before", -2, 0), ("Round", 0, 4), ("After", 4, 5)]]
         days.append(dict(date=(start + timedelta(days=offset)).date().isoformat(), teeTime=at(0), endTime=at(4),
-                         state=state, score={"within": 80, "outside": 30, "incomplete": None}[state], segments=parts,
+                         state=state, score={"within": 80, "outside": 30, "incomplete": None}[state],
+                         rating="good" if state == "within" else "poor" if state == "outside" else None,
+                         primaryIssue="wind" if state == "outside" else None, segments=parts,
                          scoreCoverage="none" if state == "incomplete" else "complete",
                          probabilityNote=None,
                          reasons=[], briefingDetail=("Sustained wind falls outside your limits before, during and after the round." if state == "outside" else "Sustained wind cannot be fully assessed before, during and after the round." if state == "incomplete" else "Temperature, sustained wind and precipitation meet your preferences before, during and after the round."),
@@ -101,7 +103,7 @@ def golf_fixture(query):
                          precipitationIntervals=[dict(start=at(h-1), end=at(h), field="total_precipitation_1h", mm=0.125) for h in range(-1, 6)],
                          regionalPeriods=[dict(name="Day", start=at(-6), end=at(6), temperatureC=20, temperatureClass="high", popPercent=pop, condition="Rain")],
                          contentID=f"fixture-{offset}-{limits}-{tee.isoformat()}"))
-    return dict(generatedAt=time(), ruleVersion="golf-fit-v3", latitude=float(param("latitude", "44.65")),
+    return dict(generatedAt=time(), ruleVersion="golf-fit-v4", latitude=float(param("latitude", "44.65")),
                 longitude=float(param("longitude", "-63.57")), timeZone=zone.key, source="Synthetic GDPS fixture",
                 runTime=time(-2), limits=limits, regionalContext=dict(name="Halifax", distanceKm=2, issuedAt=time(-1), stale=False),
                 method="Synthetic test data. Model-grid point sample; precipitation is not prorated. Regional PoP is not a point probability.",

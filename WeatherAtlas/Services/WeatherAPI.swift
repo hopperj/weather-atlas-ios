@@ -188,8 +188,9 @@ struct WeatherAPI: Sendable {
     if let timeout { request.timeoutInterval = timeout }
     // The explicit forecast snapshot provides instant display. Refreshes must
     // actually check the server rather than reuse a still-fresh HTTP response.
-    if path.hasPrefix("/api/v1/forecast/") {
+    if path.hasPrefix("/api/v1/forecast/") || path == "/api/v1/observations/nearby" {
       request.cachePolicy = .reloadIgnoringLocalCacheData
+      request.setValue("no-cache", forHTTPHeaderField: "Cache-Control")
     }
     request.setValue("application/json", forHTTPHeaderField: "Accept")
     let (data, response) = try await session.data(for: request)

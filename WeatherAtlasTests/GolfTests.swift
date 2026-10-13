@@ -1,8 +1,57 @@
+import SwiftUI
 import XCTest
 
 @testable import WeatherAtlas
 
 final class GolfTests: XCTestCase {
+  @MainActor func testEveryGolfMoodAssetRendersAndMergedProgressionIsVisible() throws {
+    let view = VStack(spacing: 12) {
+      ForEach([Optional<GolfIssue>.none, .wind, .cold, .rain], id: \.self) { issue in
+        HStack(spacing: 8) {
+          ForEach(GolfRating.allCases, id: \.self) { rating in
+            VStack {
+              GolfMoodIcon(rating: rating, issue: issue).frame(width: 88, height: 88)
+              Text(rating.label).font(.caption)
+            }
+          }
+        }
+      }
+    }
+    .padding(20).background(Color(.systemGroupedBackground))
+    for rating in GolfRating.allCases {
+      for issue in [Optional<GolfIssue>.none, .wind, .cold, .rain] {
+        let image = try XCTUnwrap(GolfMoodIcon.image(rating: rating, issue: issue))
+        XCTAssertGreaterThan(image.size.width, 200)
+        XCTAssertGreaterThan(image.size.height, 200)
+      }
+    }
+    for scheme in [ColorScheme.light, .dark] {
+      let renderer = ImageRenderer(content: view.environment(\.colorScheme, scheme))
+      renderer.scale = 2
+      let image = try XCTUnwrap(renderer.uiImage)
+      let attachment = XCTAttachment(image: image)
+      attachment.name = "Bundled golf mood faces – \(scheme == .dark ? "dark" : "light")"
+      attachment.lifetime = .keepAlways
+      add(attachment)
+    }
+  }
+
+  func testAuthoritativeOutlookAndCauseDecodeWithoutTurningUnratedDataIntoAFrown() throws {
+    for rating in GolfRating.allCases {
+      let outlook = try fixture(state: "outside", score: 60, rating: rating.rawValue, issue: "cold")
+      XCTAssertEqual(outlook.days[0].outlookRating, rating)
+      XCTAssertEqual(outlook.days[0].outlookIssue, rating.column >= 2 ? .cold : nil)
+      XCTAssertTrue(outlook.days[0].fallbackSummary.hasPrefix(rating.label))
+    }
+    for state in ["incomplete", "stale", "started", "invalid_time"] {
+      let day = try fixture(state: state, score: nil, rating: "very_poor", issue: "wind").days[0]
+      XCTAssertNil(day.outlookRating)
+      XCTAssertNil(day.outlookIssue)
+    }
+    XCTAssertNil(
+      try fixture().days[0].outlookRating,
+      "An old score must not reuse the harsh bands as a new outlook")
+  }
   @MainActor func testNoDescriptionUntilResponseFinishesIncludingQueuedCancelledAndChangedData()
     async throws
   {
@@ -266,7 +315,10 @@ final class GolfTests: XCTestCase {
     #endif
   }
 
-  private func fixture(state: String = "within", score: Int? = 80, unpublishedPop: Bool = false)
+  private func fixture(
+    state: String = "within", score: Int? = 80, unpublishedPop: Bool = false,
+    rating: String? = nil, issue: String? = nil
+  )
     throws -> GolfOutlook
   {
     let now = Date()
@@ -307,6 +359,7 @@ final class GolfTests: XCTestCase {
     let day: [String: Any] = [
       "date": "2099-09-16", "teeTime": date(0), "endTime": date(4), "state": state,
       "score": score as Any? ?? NSNull(), "segments": segments, "reasons": [], "contentID": state,
+      "rating": rating as Any? ?? NSNull(), "primaryIssue": issue as Any? ?? NSNull(),
       "scoreCoverage": state == "partial" ? "partial" : score == nil ? "none" : "complete",
       "probabilityNote": state == "partial"
         ? "Your rain-chance limit could not be fully checked because a percentage is unavailable."

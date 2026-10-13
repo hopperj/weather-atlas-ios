@@ -80,6 +80,22 @@ required. See [fixed HTTPS endpoint](docs/fixed-https-endpoint.md).
 
 ## Implemented
 
+- Build 1.2 (25) displays five face-based Golf outlooks instead of `/100`: Excellent, Good,
+  Mixed, Poor and Very poor. Weather cues identify wind, cold or rain for Mixed
+  and worse. Cold progresses from thermometer to toque plus thermometer; rain
+  progresses from two drops to umbrella plus heavier rain. Artwork is bundled
+  with original colours and supports light/dark appearance and VoiceOver.
+  The accompanying `golf-fit-v4` API evaluates discomfort over time, removes the
+  abrupt wind cap and preserves separate preference warnings. An API deployment
+  and rebuilt iOS app are both needed; older servers show Update needed without
+  assigning their old numeric index to the new faces.
+
+- Forecast weather symbols now use a shared colour palette in current conditions,
+  next-24-hour cards and the seven-day rows: yellow sun/moon, grey-blue clouds,
+  blue precipitation and yellow lightning. Native symbol shapes and accessible
+  descriptions are retained. Light cards use deeper cloud/precipitation shades
+  for contrast; dark cards and the hero use the web forecast's lighter palette.
+
 - Build 1.2 (24) brings the web forecast page's visual hierarchy to iPhone. A
   current-conditions card now leads with the nearest fresh observation, followed
   by horizontally scrolling next-24-hours cards and compact seven-day rows whose

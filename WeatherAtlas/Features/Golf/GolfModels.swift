@@ -72,6 +72,48 @@ struct GolfOutlook: Codable, Sendable {
   let days: [GolfDay]
 }
 
+enum GolfRating: String, CaseIterable, Codable, Sendable {
+  case excellent, good, mixed, poor
+  case veryPoor = "very_poor"
+  var label: String {
+    switch self {
+    case .excellent: "Excellent"
+    case .good: "Good"
+    case .mixed: "Mixed"
+    case .poor: "Poor"
+    case .veryPoor: "Very poor"
+    }
+  }
+  var column: Int { Self.allCases.firstIndex(of: self)! }
+  var colour: Color {
+    switch self {
+    case .excellent, .good: .teal
+    case .mixed: .orange
+    case .poor, .veryPoor: .red
+    }
+  }
+}
+
+enum GolfIssue: String, Codable, Sendable {
+  case wind, cold, heat, rain
+  var label: String {
+    switch self {
+    case .wind: "Wind"
+    case .cold: "Cold"
+    case .heat: "Heat"
+    case .rain: "Rain or rain risk"
+    }
+  }
+  var atlasRow: Int {
+    switch self {
+    case .wind: 1
+    case .cold: 2
+    case .rain: 3
+    case .heat: 0
+    }
+  }
+}
+
 struct GolfDay: Codable, Identifiable, Sendable {
   struct ModelRow: Codable, Sendable {
     let time: Date
@@ -90,6 +132,8 @@ struct GolfDay: Codable, Identifiable, Sendable {
   let endTime: Date
   let state: String
   let score: Int?
+  var rating: String? = nil
+  var primaryIssue: String? = nil
   let scoreCoverage: String?
   let probabilityNote: String?
   let segments: [GolfSegment]
@@ -101,6 +145,24 @@ struct GolfDay: Codable, Identifiable, Sendable {
   let contentID: String
   var id: String { date }
   var round: GolfSegment? { segments.first { $0.name == "Round" } }
+  var outlookRating: GolfRating? {
+    guard ["within", "outside", "partial"].contains(state), score != nil else { return nil }
+    return rating.flatMap(GolfRating.init(rawValue:))
+  }
+  var outlookIssue: GolfIssue? {
+    guard let outlookRating, outlookRating.column >= 2 else { return nil }
+    return primaryIssue.flatMap(GolfIssue.init(rawValue:))
+  }
+  var qualitativeOpening: String? {
+    guard let outlookRating else { return nil }
+    switch outlookRating {
+    case .excellent: return "Excellent golf weather, comfortably within your preferences."
+    case .good: return "Good golf weather overall, with a few possible drawbacks."
+    case .mixed: return "Mixed golf weather, with some noticeable drawbacks."
+    case .poor: return "Poor golf weather for your preferences."
+    case .veryPoor: return "Very poor golf weather for your preferences."
+    }
+  }
   var status: String {
     switch state {
     case "within", "partial": "Within your limits"
@@ -112,7 +174,11 @@ struct GolfDay: Codable, Identifiable, Sendable {
     }
   }
   var fallbackSummary: String {
-    switch state {
+    if let qualitativeOpening {
+      return
+        "\(qualitativeOpening) \(briefingDetail ?? "Review the round details for the weather and preference checks.")"
+    }
+    return switch state {
     case "within", "partial":
       "The forecast fits your playing preferences. \(briefingDetail ?? "Temperature, wind and precipitation fit your limits before, during and after the round.")"
     case "outside":
@@ -122,7 +188,7 @@ struct GolfDay: Codable, Identifiable, Sendable {
     case "invalid_time":
       "This local tee time does not exist on this date because of a clock change. Choose another time."
     case "stale":
-      "A recent model forecast is unavailable for this point. No weather-fit score can be provided yet."
+      "A recent model forecast is unavailable for this point. No outlook can be provided yet."
     default:
       "Some required weather values are missing or their timing is too coarse. \(briefingDetail ?? "A full comparison against your limits isn't available for this window.")"
     }
@@ -237,6 +303,6 @@ extension WeatherAPI {
   func cancel() {
     ticket = UUID()
     loading = false
-    narratives.values.forEach { $0.cancel() }
+    for narrative in narratives.values { narrative.cancel() }
   }
 }

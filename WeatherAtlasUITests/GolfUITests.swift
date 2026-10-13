@@ -13,6 +13,13 @@ final class GolfUITests: XCTestCase {
     app.tabBars.buttons["Golf"].tap()
     XCTAssertTrue(app.buttons["golfChooseLocation"].waitForExistence(timeout: 10))
     XCTAssertTrue(app.staticTexts["Within your limits"].firstMatch.waitForExistence(timeout: 20))
+    XCTAssertTrue(app.staticTexts["Good"].firstMatch.exists)
+    XCTAssertFalse(
+      app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "/100")).firstMatch.exists)
+    let capture = XCTAttachment(screenshot: app.screenshot())
+    capture.name = "Golf with a five-level face instead of a number"
+    capture.lifetime = .keepAlways
+    add(capture)
     XCTAssertFalse(app.staticTexts["Available weather fits"].firstMatch.exists)
     XCTAssertFalse(
       app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Weather fit · limited"))

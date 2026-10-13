@@ -49,9 +49,18 @@ struct GolfScreen: View {
                   server: store.serverURL.absoluteString)
               }
             }
-            DisclosureGroup("About the score & data") {
+            DisclosureGroup("About the outlook & data") {
               VStack(alignment: .leading, spacing: 8) {
-                Text(outlook.scoreMeaning)
+                Text(
+                  "Five outlooks: Excellent, Good, Mixed, Poor and Very poor. Excellent means comfortable temperatures, light wind, little or no rain and comfortable margins inside your preferences. Good allows mild drawbacks or a brief small exceedance. Missing or stale data is not assigned an unhappy face."
+                )
+                if outlook.ruleVersion == "golf-fit-v4" {
+                  Text(outlook.scoreMeaning)
+                } else {
+                  Text(
+                    "The server needs the five-level Golf update before an outlook face can be shown. The available weather and preference checks remain below."
+                  )
+                }
                 Text(outlook.method)
                 if let context = outlook.regionalContext {
                   Text(
@@ -147,8 +156,9 @@ private struct GolfDayCard: View {
     )
   }
   private var accent: Color {
-    ["within", "partial"].contains(day.state)
-      ? .teal : day.state == "outside" ? .orange : .secondary
+    day.outlookRating?.colour
+      ?? (["within", "partial"].contains(day.state)
+        ? .teal : day.state == "outside" ? .orange : .secondary)
   }
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
@@ -162,12 +172,25 @@ private struct GolfDayCard: View {
         }
         Spacer()
         VStack(alignment: .trailing, spacing: 2) {
-          Text(day.score.map { "\($0)/100" } ?? "—").font(.title2.bold()).foregroundStyle(accent)
-          Text("Weather fit")
+          if let rating = day.outlookRating {
+            GolfMoodIcon(rating: rating, issue: day.outlookIssue)
+              .frame(width: 72, height: 72)
+              .accessibilityIdentifier("golfOutlookIcon-\(day.id)")
+            Text(rating.label).font(.subheadline.bold()).foregroundStyle(accent)
+          } else {
+            Image(systemName: "questionmark.circle").font(.title2).foregroundStyle(.secondary)
+            Text(outlook.ruleVersion == "golf-fit-v4" ? "Not rated" : "Update needed")
+              .font(.caption).foregroundStyle(.secondary)
+          }
+          Text("Golf outlook")
             .font(.caption2).foregroundStyle(.secondary)
-        }.accessibilityElement(children: .combine)
+        }.accessibilityElement(children: .contain)
       }
-      Text(day.status).font(.subheadline.weight(.semibold)).foregroundStyle(accent)
+      if let issue = day.outlookIssue {
+        Text("Main drawback: \(issue.label)").font(.subheadline.weight(.semibold)).foregroundStyle(
+          accent)
+      }
+      Text(day.status).font(.caption).foregroundStyle(.secondary)
       if let description {
         Text(description.text)
           .font(.callout).fixedSize(horizontal: false, vertical: true)
@@ -245,6 +268,44 @@ private struct GolfDayCard: View {
         }
       }
     }.font(.caption)
+  }
+}
+
+/// Original-colour PNG sprites; the approved atlas is bundled, never downloaded.
+struct GolfMoodIcon: View {
+  let rating: GolfRating
+  var issue: GolfIssue?
+  static func image(rating: GolfRating, issue: GolfIssue?) -> UIImage? {
+    guard let atlas = UIImage(named: "GolfMoodAtlas")?.cgImage else { return nil }
+    let row = rating.column >= 2 ? (issue?.atlasRow ?? 0) : 0
+    // The generated artwork has taller umbrella silhouettes. These verified
+    // transparent gutters prevent drops or wisps leaking from adjacent sprites.
+    let rowEdges = [0.0, 0.27, 0.49, 0.715, 1.0]
+    let leftFraction = row == 1 && rating.column == 4 ? 0.792 : Double(rating.column) / 5
+    let rightFraction = row == 1 && rating.column == 3 ? 0.792 : Double(rating.column + 1) / 5
+    let left = Int((leftFraction * Double(atlas.width)).rounded())
+    let right = Int((rightFraction * Double(atlas.width)).rounded())
+    let top = Int((rowEdges[row] * Double(atlas.height)).rounded())
+    let bottom = Int((rowEdges[row + 1] * Double(atlas.height)).rounded())
+    guard
+      let cell = atlas.cropping(
+        to: CGRect(x: left, y: top, width: right - left, height: bottom - top))
+    else { return nil }
+    return UIImage(cgImage: cell)
+  }
+  var body: some View {
+    Group {
+      if let image = Self.image(rating: rating, issue: issue) {
+        Image(uiImage: image).resizable().renderingMode(.original).scaledToFit()
+      } else {
+        Image(systemName: "questionmark.circle").resizable().scaledToFit().foregroundStyle(
+          .secondary)
+      }
+    }
+    .accessibilityElement(children: .ignore)
+    .accessibilityAddTraits(.isImage)
+    .accessibilityLabel(
+      "\(rating.label) golf outlook\(issue.map { ", main drawback: \($0.label)" } ?? "")")
   }
 }
 

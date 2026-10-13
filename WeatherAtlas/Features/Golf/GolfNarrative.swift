@@ -13,13 +13,15 @@ struct GolfNarrativeInput: Equatable, Sendable {
     state = day.state == "partial" ? "within" : day.state
     hasUnpublishedProbability = day.segments.contains { $0.popPercent == nil }
     fallback = day.fallbackSummary
-    opening =
+    let legacyOpening =
       switch day.state {
       case "within", "partial": "The forecast fits your playing preferences."
-      case "outside": "Some forecast conditions exceed your limits during the round or its buffers."
+      case "outside":
+        "Some forecast conditions exceed your limits during the round or its buffers."
       default:
         "Missing weather data or uncertain timing prevents a full assessment against your limits."
       }
+    opening = day.qualitativeOpening ?? legacyOpening
     let encoder = JSONEncoder()
     encoder.dateEncodingStrategy = .iso8601
     encoder.outputFormatting = [.sortedKeys]
@@ -39,6 +41,7 @@ struct GolfNarrativeInput: Equatable, Sendable {
       All timestamps below are explicit UTC timestamps. Before is two hours, Round is four hours, After is one hour.
       Set the score string to exactly "\(day.score.map(String.init) ?? "null")". "null" means not rated.
       Assessment state: \(state). It is a preference index, NOT a probability of playing or a safety assessment.
+      Displayed outlook: \(day.outlookRating?.label ?? "Not rated"). Primary drawback: \(day.outlookIssue?.label ?? "None selected"). The number is an internal compatibility value; never put a number or numeric rating in the explanation. Good may include a brief small preference exceedance. Keep the supplied outlook and the separate preference checks consistent; do not turn every exceedance into poor weather.
       Judge the weather using forecast temperature, wind and precipitation amounts at the selected point and time, with the regional forecast as context. A forecast amount still counts when the bulletin publishes no numeric rain percentage. Apply the rain-chance preference only to published percentages. Never invent a percentage or claim its limit passed when none is published.
       Omitted rain percentages are normal bulletin formatting, not missing weather data. Do not discuss their absence, qualify the assessment because of them, or add a rain-probability disclaimer. Describe the forecast weather and how it compares with the user's preferences.
       Rain totals apply separately to each window. Ranges are timing bounds, not averages. PoP is broader regional context, not hourly point probability. Missing point-model values are unknown, not zero. Never infer drainage, course condition, lightning safety or course opening.

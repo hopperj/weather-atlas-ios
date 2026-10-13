@@ -22,6 +22,74 @@ final class ForecastRefreshTests: XCTestCase {
         fix: fix, followsLocation: true, hasBulletin: true, initialRequestFailed: false,
         now: now.addingTimeInterval(301)))
   }
+
+  @MainActor func testReconnectRefreshSignalOnlyFiresAfterAnOfflineTransition() {
+    let monitor = ForecastConnectionMonitor(startMonitoring: false)
+    monitor.updateConnection(true)
+    XCTAssertEqual(monitor.reconnectRevision, 0)
+    monitor.updateConnection(false)
+    XCTAssertFalse(monitor.online)
+    monitor.updateConnection(false)
+    monitor.updateConnection(true)
+    monitor.updateConnection(true)
+    XCTAssertEqual(monitor.reconnectRevision, 1)
+    XCTAssertTrue(monitor.online)
+  }
+
+  func testRetainedBulletinExpiresAgainstTheClockEvenWhenOriginallyFresh() {
+    let issued = Date(timeIntervalSince1970: 1_791_540_000)
+    let saved = region(now: issued)
+    let expired = ForecastRefreshPolicy.currentRegion(
+      saved, at: issued.addingTimeInterval(10 * 86400))
+    XCTAssertTrue(expired.stale)
+    XCTAssertTrue(expired.periods.isEmpty)
+    XCTAssertTrue(saved.periods.count > 0, "Display expiry must not mutate the saved source")
+  }
+
+  func testTodayChangesAtLocalMidnightAndTomorrowIsNeverCalledToday() {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = TimeZone(identifier: "America/Halifax")!
+    let start = ISO8601DateFormatter().date(from: "2026-10-09T21:00:00Z")!
+    let night = region(now: start).periods[0]
+    let before = ISO8601DateFormatter().date(from: "2026-10-10T02:59:00Z")!
+    let after = before.addingTimeInterval(120)
+    XCTAssertEqual(
+      ForecastRefreshPolicy.dayTitle(for: night, at: before, calendar: calendar), "Today")
+    XCTAssertNotEqual(
+      ForecastRefreshPolicy.dayTitle(for: night, at: after, calendar: calendar), "Today")
+    let tomorrow = region(now: start.addingTimeInterval(86400)).periods[0]
+    XCTAssertNotEqual(
+      ForecastRefreshPolicy.dayTitle(for: tomorrow, at: before, calendar: calendar), "Today")
+    XCTAssertEqual(
+      ForecastRefreshPolicy.dayTitle(for: tomorrow, at: after, calendar: calendar), "Today")
+    XCTAssertFalse(
+      ForecastRefreshPolicy.currentRegion(region(now: start), at: after).periods.isEmpty)
+  }
+
+  func testHourlyDisplayDropsElapsedHoursWithoutInventingValues() {
+    let start = Date(timeIntervalSince1970: 1_791_540_000)
+    var hours: [HourlyForecastHour] = []
+    for offset in 0..<4 {
+      let elapsed = Double(offset) * 3600
+      let temperature: Double? = offset == 2 ? nil : 20
+      hours.append(
+        HourlyForecastHour(
+          time: start.addingTimeInterval(elapsed), runTime: start,
+          precipitationStart: start.addingTimeInterval(elapsed - 3600),
+          status: offset == 2 ? "missing" : "complete", temperatureC: temperature,
+          relativeHumidityPercent: 60, precipitationMm: 0, windKmh: 10, gustKmh: 15))
+    }
+    let forecast = HourlyForecast(
+      regionId: "chosen", source: "GDPS", generatedAt: start, start: start,
+      end: start.addingTimeInterval(4 * 3600), availableHours: 3, completeHours: 3, hours: hours)
+    let display = ForecastRefreshPolicy.upcomingHourly(
+      forecast, at: start.addingTimeInterval(2 * 3600 + 300))
+    XCTAssertEqual(display?.hours.count, 2)
+    XCTAssertNil(display?.hours.first?.temperatureC)
+    XCTAssertEqual(display?.availableHours, 1)
+    XCTAssertNil(
+      ForecastRefreshPolicy.upcomingHourly(forecast, at: start.addingTimeInterval(5 * 3600)))
+  }
   private var suites: [String] = []
   override func tearDown() {
     for name in suites { UserDefaults.standard.removePersistentDomain(forName: name) }
@@ -110,7 +178,10 @@ final class ForecastRefreshTests: XCTestCase {
   }
 
   func testForecastRefreshChecksNetworkButDoesNotDisableMapHTTPCache() async throws {
-    struct Echo: Decodable, Sendable { let policy: UInt }
+    struct Echo: Decodable, Sendable {
+      let policy: UInt
+      let revalidated: Bool
+    }
     let config = URLSessionConfiguration.ephemeral
     config.protocolClasses = [ForecastPolicyProbe.self]
     let api = WeatherAPI(
@@ -118,12 +189,39 @@ final class ForecastRefreshTests: XCTestCase {
     for path in [
       "/api/v1/forecast/regions", "/api/v1/forecast/nearest", "/api/v1/forecast/hourly",
       "/api/v1/forecast/precipitation",
+      "/api/v1/observations/nearby",
     ] {
       let result: Echo = try await api.get(path)
       XCTAssertEqual(result.policy, URLRequest.CachePolicy.reloadIgnoringLocalCacheData.rawValue)
+      XCTAssertTrue(result.revalidated)
     }
     let catalogue: Echo = try await api.get("/api/v1/products")
     XCTAssertEqual(catalogue.policy, URLRequest.CachePolicy.useProtocolCachePolicy.rawValue)
+    XCTAssertFalse(catalogue.revalidated)
+  }
+
+  @MainActor func testPartialRefreshKeepsLastSuccessfulTimeUntilEverySectionRecovers() async {
+    let now = Date()
+    let cache = store(defaults())
+    let previous = snapshot(now: now.addingTimeInterval(-300))
+    cache.save(previous)
+    let api = ForecastTestServer(
+      periods: region(now: now).periods,
+      observationsError: .server(status: 503, message: "Temporarily unavailable"))
+    let model = ForecastModel(api: api, cache: cache)
+    await model.load(preferredID: "chosen", location: nil)
+    XCTAssertTrue(model.refreshIncomplete)
+    XCTAssertEqual(
+      model.lastUpdated?.timeIntervalSince1970 ?? 0, previous.lastUpdated!.timeIntervalSince1970,
+      accuracy: 0.001)
+    XCTAssertNotNil(model.observationsMessage)
+    XCTAssertNotNil(model.hourly)
+    XCTAssertNotNil(model.precipitation)
+    await api.setObservationsError(nil)
+    await model.load(preferredID: "chosen", location: nil)
+    XCTAssertFalse(model.refreshIncomplete)
+    XCTAssertFalse(model.showingSavedData)
+    XCTAssertTrue(model.lastUpdated! > previous.lastUpdated!)
   }
 
   @MainActor func testSavedForecastRestoresSynchronouslyWithoutAnyAPIOrLocationCall() async {
@@ -385,7 +483,11 @@ private final class ForecastPolicyProbe: URLProtocol, @unchecked Sendable {
       url: request.url!, statusCode: 200, httpVersion: nil,
       headerFields: ["Content-Type": "application/json"])!
     client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
-    client?.urlProtocol(self, didLoad: Data("{\"policy\":\(request.cachePolicy.rawValue)}".utf8))
+    let revalidated = request.value(forHTTPHeaderField: "Cache-Control") == "no-cache"
+    client?.urlProtocol(
+      self,
+      didLoad: Data(
+        "{\"policy\":\(request.cachePolicy.rawValue),\"revalidated\":\(revalidated)}".utf8))
     client?.urlProtocolDidFinishLoading(self)
   }
   override func stopLoading() {}

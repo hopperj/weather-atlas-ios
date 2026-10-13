@@ -1,4 +1,5 @@
 import CoreLocation
+import SwiftUI
 import UIKit
 import XCTest
 
@@ -398,6 +399,41 @@ final class ForecastPresentationTests: XCTestCase {
     for icon in ForecastWeatherIcon.allCases {
       XCTAssertNotNil(UIImage(systemName: icon.symbolName), icon.symbolName)
       XCTAssertFalse(icon.label.isEmpty)
+    }
+  }
+
+  @MainActor func testWeatherPaletteRendersInLightAndDarkAppearances() throws {
+    for scheme in [ColorScheme.light, .dark] {
+      let preview = VStack(spacing: 14) {
+        HStack(spacing: 24) {
+          ForEach(
+            [ForecastWeatherIcon.clearDay, .partlyCloudyDay, .rain, .thunderstorms, .snow],
+            id: \.self
+          ) { icon in
+            ForecastConditionSymbol(icon: icon, onHero: true).font(.system(size: 34))
+          }
+        }
+        .frame(maxWidth: .infinity).padding(20).background(Color(hex: "#153e60"))
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 18) {
+          ForEach(ForecastWeatherIcon.allCases, id: \.self) { icon in
+            VStack(spacing: 8) {
+              ForecastConditionSymbol(icon: icon).font(.system(size: 36)).frame(height: 48)
+              Text(icon.label).font(.caption).foregroundStyle(.primary)
+            }
+            .frame(maxWidth: .infinity, minHeight: 85)
+          }
+        }
+      }
+      .padding(16).frame(width: 420)
+      .background(scheme == .dark ? Color(hex: "#1c1c1e") : .white)
+      .environment(\.colorScheme, scheme)
+      let renderer = ImageRenderer(content: preview)
+      renderer.scale = 2
+      let image = try XCTUnwrap(renderer.uiImage)
+      let attachment = XCTAttachment(image: image)
+      attachment.name = "Weather symbol palette – \(scheme == .dark ? "dark" : "light")"
+      attachment.lifetime = .keepAlways
+      add(attachment)
     }
   }
 
@@ -1086,6 +1122,9 @@ final class PrecipitationBehaviorTests: XCTestCase {
     XCTAssertFalse(model.precipitationLoading)
     XCTAssertEqual(
       model.precipitationDescription(for: rainy), "Precipitation: amount unavailable")
+    XCTAssertNotNil(model.precipitationError)
+    XCTAssertTrue(model.refreshIncomplete)
+    XCTAssertNil(model.lastUpdated)
     XCTAssertEqual(model.region?.periods.first?.precipitationLikelihoodDescription, "Rain expected")
   }
 
@@ -1096,6 +1135,7 @@ final class PrecipitationBehaviorTests: XCTestCase {
     await model.load(preferredID: "chosen", location: nil)
     XCTAssertNil(model.hourly)
     XCTAssertNotNil(model.error)
+    XCTAssertNotNil(model.hourlyError)
     XCTAssertTrue(model.hasPrecipitationEstimates)
     XCTAssertFalse(model.hourlyLoading)
   }
@@ -1141,6 +1181,7 @@ actor ForecastTestServer: ForecastServing {
   let periods: [ForecastPeriod]
   let precipitationError: WeatherAPIError?
   let hourlyError: WeatherAPIError?
+  private var observationsError: WeatherAPIError?
   let holdPrecipitation: Bool
   let extraRegions: [ForecastRegion]
   private var holdNextRegions: Bool
@@ -1155,7 +1196,8 @@ actor ForecastTestServer: ForecastServing {
     holdNearest: Bool = false, nearestError: WeatherAPIError? = nil,
     periods: [ForecastPeriod] = [], precipitationError: WeatherAPIError? = nil,
     hourlyError: WeatherAPIError? = nil, holdPrecipitation: Bool = false,
-    extraRegions: [ForecastRegion] = [], holdRegions: Bool = false
+    extraRegions: [ForecastRegion] = [], holdRegions: Bool = false,
+    observationsError: WeatherAPIError? = nil
   ) {
     self.holdNearest = holdNearest
     self.nearestError = nearestError
@@ -1165,6 +1207,7 @@ actor ForecastTestServer: ForecastServing {
     self.holdPrecipitation = holdPrecipitation
     self.extraRegions = extraRegions
     self.holdNextRegions = holdRegions
+    self.observationsError = observationsError
   }
   private func region(_ id: String) -> ForecastRegion {
     ForecastRegion(
@@ -1216,6 +1259,11 @@ actor ForecastTestServer: ForecastServing {
     return HourlyForecast(
       regionId: areaID, source: "Test", generatedAt: Date(), start: Date(),
       end: Date(), availableHours: 0, completeHours: 0, hours: [])
+  }
+  func setObservationsError(_ error: WeatherAPIError?) { observationsError = error }
+  func nearbyStations(longitude: Double, latitude: Double) async throws -> StationCollection {
+    if let observationsError { throw observationsError }
+    return StationCollection(generatedAt: Date(), items: [], nextOffset: nil)
   }
   func precipitationForecast(areaID: String) async throws -> PrecipitationForecast {
     calls.append("precipitation:\(areaID)")

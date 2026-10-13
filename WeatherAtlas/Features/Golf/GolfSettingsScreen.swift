@@ -44,7 +44,7 @@ struct GolfSettingsScreen: View {
           "These limits are checked separately for the two hours before, the four-hour round, and the hour afterward. Precipitation is the total in each window, not a daily amount or rate. Gusts are shown separately from your sustained-wind limit."
         )
         Text(
-          "Your rain-chance limit applies when the regional forecast publishes a percentage. Otherwise, Golf judges the forecast temperature, wind and precipitation amount at your pin, using the regional forecast as context. Weather fit is a preference index, not a probability of playing or an assurance that a course is open or safe."
+          "The five-level outlook reflects how comfortable the weather is for your preferences. Excellent needs comfortable margins and little or no rain; Good allows mild drawbacks. Wind and temperature consider how long discomfort lasts, so a brief small exceedance does not automatically mean Poor. The detailed preference checks remain separate. Your rain-chance preference applies only when a regional percentage is published. The outlook is not a probability of playing or an assurance that a course is open or safe."
         )
       }.font(.footnote).foregroundStyle(.secondary)
       if !draft.isValid {

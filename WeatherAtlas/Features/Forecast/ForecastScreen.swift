@@ -47,6 +47,10 @@ final class ForecastModel: ObservableObject {
   @Published private(set) var showingSavedData = false
   @Published private(set) var lastUpdated: Date?
   @Published private(set) var refreshIncomplete = false
+  @Published var networkAvailable = true
+  @Published private(set) var hourlyError: String?
+  @Published private(set) var precipitationError: String?
+  var isRefreshing: Bool { loading || hourlyLoading || precipitationLoading || observationsLoading }
   let api: any ForecastServing
   private var revision = 0
   private let cache: ForecastSnapshotStore?
@@ -78,6 +82,8 @@ final class ForecastModel: ObservableObject {
     lastUpdated = nil
     error = nil
     refreshIncomplete = false
+    hourlyError = nil
+    precipitationError = nil
     guard
       let saved = cache?.read(
         selectionID: preferredID, defaultLocationID: defaultLocation?.id)
@@ -148,6 +154,8 @@ final class ForecastModel: ObservableObject {
     if region != nil { showingSavedData = true }
     error = nil
     refreshIncomplete = false
+    hourlyError = nil
+    precipitationError = nil
     loading = false
     hourlyLoading = false
     precipitationLoading = false
@@ -233,10 +241,10 @@ final class ForecastModel: ObservableObject {
       saveSnapshot()  // A successful bulletin is useful even if optional feeds later fail.
       async let hours = loadHourly(areaID: selected.id, request: request)
       async let amounts = loadPrecipitation(for: selected, request: request)
-      async let observations: Void = loadObservations(for: selected, request: request)
-      let (hoursOK, amountsOK, _) = await (hours, amounts, observations)
+      async let observations = loadObservations(for: selected, request: request)
+      let (hoursOK, amountsOK, observationsOK) = await (hours, amounts, observations)
       guard request == revision && !Task.isCancelled else { return }
-      if hoursOK && amountsOK {
+      if hoursOK && amountsOK && observationsOK {
         lastUpdated = Date()
         showingSavedData = false
       } else {
@@ -319,6 +327,8 @@ final class ForecastModel: ObservableObject {
     } catch {
       guard request == revision && !Task.isCancelled else { return false }
       self.error = error.localizedDescription
+      hourlyError =
+        "Model hours could not be refreshed. Previously loaded hours are shown only while valid."
       return false
     }
   }
@@ -331,32 +341,41 @@ final class ForecastModel: ObservableObject {
       try Task.checkCancellation()
       guard request == revision, result.regionId == selected.id,
         result.issuedAt == selected.issuedAt
-      else { return false }
+      else {
+        guard request == revision && !Task.isCancelled else { return false }
+        precipitationError = "Precipitation totals are waiting for the current bulletin's update."
+        return false
+      }
       precipitation = result
       return true
     } catch {
+      guard request == revision && !Task.isCancelled else { return false }
+      precipitationError =
+        "Precipitation totals could not be refreshed. Issued bulletin amounts remain available."
       // Keep the issued bulletin and hourly forecast. Wet periods explicitly
       // say "amount unavailable" instead of interpreting a failed request as zero.
       return false
     }
   }
 
-  private func loadObservations(for selected: ForecastRegion, request: Int) async {
+  private func loadObservations(for selected: ForecastRegion, request: Int) async -> Bool {
     defer { if request == revision { observationsLoading = false } }
     do {
       let result = try await api.nearbyStations(
         longitude: selected.longitude, latitude: selected.latitude)
       try Task.checkCancellation()
-      guard request == revision else { return }
+      guard request == revision else { return false }
       nearbyStations = result.items
       observationsMessage =
         result.items.isEmpty
         ? "No collected stations within 100 km of this forecast location." : nil
+      return true
     } catch {
-      guard request == revision && !Task.isCancelled else { return }
+      guard request == revision && !Task.isCancelled else { return false }
       observationsMessage =
         nearbyStations.isEmpty
         ? "Nearby observations aren't available yet." : "Could not refresh the observations."
+      return false
     }
   }
 }
@@ -374,6 +393,8 @@ struct ForecastScreen: View {
   @Environment(\.timeZone) private var timeZone
   @Environment(\.locale) private var locale
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+  @Environment(\.scenePhase) private var scenePhase
+  @State private var now = Date()
   @State private var choosingRegion = false
   @State private var mapRegion: ForecastRegion?
   @State private var query = ""
@@ -419,8 +440,13 @@ struct ForecastScreen: View {
               .accessibilityIdentifier("savedForecastNotice")
           }
           if let error = model.error { StatusMessage(text: error, symbol: "wifi.exclamationmark") }
-          if let region = model.region {
+          if let savedRegion = model.region {
+            let region = ForecastRefreshPolicy.currentRegion(savedRegion, at: now)
             hero(region)
+            if !model.networkAvailable {
+              Label("Offline · saved data shown where still valid", systemImage: "wifi.slash")
+                .font(.caption).foregroundStyle(.secondary)
+            }
             if region.stale {
               Label("Forecast update overdue", systemImage: "clock.badge.exclamationmark")
                 .font(.caption).foregroundStyle(.secondary)
@@ -431,8 +457,10 @@ struct ForecastScreen: View {
             }
             .pickerStyle(.segmented)
             .accessibilityIdentifier("forecastViewPicker")
-            ForecastInsightsView(region: region, summary: store.forecastSummary)
-              .id(region.id)
+            if !region.periods.isEmpty {
+              ForecastInsightsView(region: region, summary: store.forecastSummary)
+                .id(region.id)
+            }
             if forecastView == .daily {
               hourlyCards(region)
               dailySection(region)
@@ -494,6 +522,14 @@ struct ForecastScreen: View {
         }
       }
       .refreshable { store.refreshForecast() }
+      .task(id: scenePhase) {
+        guard scenePhase == .active else { return }
+        now = Date()
+        while !Task.isCancelled {
+          do { try await Task.sleep(for: .seconds(60)) } catch { return }
+          now = Date()
+        }
+      }
       .fullScreenCover(item: $mapRegion) { region in
         ForecastLocationMap(region: region, pin: store.forecastMapPin, api: store.api) {
           selected, pin in
@@ -547,10 +583,8 @@ struct ForecastScreen: View {
   }
 
   private func hero(_ region: ForecastRegion) -> some View {
-    let now = Date()
     let currentPeriod =
       region.periods.first { $0.start <= now && now < $0.end }
-      ?? region.periods.first { $0.end > now } ?? region.periods.first
     let observation = model.currentObservation
     let icon = currentPeriod?.weatherIcon ?? .unknown
     let temperature = observation?.value(.temperatureC) ?? currentPeriod?.temperatureC
@@ -626,7 +660,8 @@ struct ForecastScreen: View {
           : AnyLayout(HStackLayout(alignment: .top, spacing: 8))
       ) {
         heroMetric(
-          "Humidity", value: metric(
+          "Humidity",
+          value: metric(
             observation?.value(.humidityPercent) ?? currentPeriod?.relativeHumidityPercent, "%"),
           symbol: "humidity")
         heroMetric(
@@ -638,6 +673,13 @@ struct ForecastScreen: View {
       Text("Forecast issued \(region.issuedAt.formatted(date: .abbreviated, time: .shortened))")
         .font(.caption2).opacity(0.78)
         .accessibilityIdentifier("forecastIssuedAt")
+      Text(
+        model.lastUpdated.map {
+          "Last updated \($0.formatted(date: .abbreviated, time: .shortened))"
+        } ?? "Waiting for forecast updates"
+      )
+      .font(.caption2).opacity(0.78)
+      .accessibilityIdentifier("forecastLastUpdated")
       if dynamicTypeSize.isAccessibilitySize { forecastMapButton(region) }
     }
     .padding(18).foregroundStyle(.white)
@@ -659,9 +701,10 @@ struct ForecastScreen: View {
       .accessibilityLabel("Show on map")
   }
 
-  private func conditionIcon(_ icon: ForecastWeatherIcon, size: CGFloat, width: CGFloat) -> some View {
-    Image(systemName: icon.symbolName)
-      .symbolRenderingMode(.hierarchical)
+  private func conditionIcon(_ icon: ForecastWeatherIcon, size: CGFloat, width: CGFloat)
+    -> some View
+  {
+    ForecastConditionSymbol(icon: icon, onHero: true)
       .font(.system(size: size))
       .frame(width: width)
       .accessibilityLabel(icon.label)
@@ -690,30 +733,37 @@ struct ForecastScreen: View {
     }
   }
 
+  private var currentHourly: HourlyForecast? {
+    guard model.hourly?.regionId == model.region?.id else { return nil }
+    return ForecastRefreshPolicy.upcomingHourly(model.hourly, at: now)
+  }
+
   @ViewBuilder private func hourlyCards(_ region: ForecastRegion) -> some View {
     VStack(alignment: .leading, spacing: 10) {
       HStack {
         Text("Next 24 hours").font(.title2.bold())
         Spacer()
-        if let hourly = model.hourly {
+        if let hourly = currentHourly {
           Text(hourly.source).font(.caption).foregroundStyle(.secondary)
         }
       }
-      if model.hourlyLoading && model.hourly == nil {
+      if let message = model.hourlyError {
+        Text(message).font(.caption).foregroundStyle(.secondary)
+      }
+      if model.hourlyLoading && currentHourly == nil {
         ProgressView("Loading the next 24 hours…")
           .accessibilityIdentifier("hourlyCardsInitialLoading")
-      } else if let hourly = model.hourly {
+      } else if let hourly = currentHourly {
         let hours = Array(hourly.hours.prefix(24))
         ScrollView(.horizontal) {
           LazyHStack(spacing: 10) {
             ForEach(Array(hours.enumerated()), id: \.element.id) { index, hour in
               let period = region.periods.first { $0.start <= hour.time && hour.time < $0.end }
               VStack(spacing: 9) {
-                Text(index == 0 ? "Now" : hour.time.formatted(.dateTime.hour()))
+                Text(hour.time <= now ? "Now" : hour.time.formatted(.dateTime.hour()))
                   .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-                Image(systemName: (period?.weatherIcon ?? .unknown).symbolName)
-                  .symbolRenderingMode(.hierarchical)
-                  .font(.title2).foregroundStyle(.tint)
+                ForecastConditionSymbol(icon: period?.weatherIcon ?? .unknown)
+                  .font(.title2)
                   .frame(height: 28)
                   .accessibilityHidden(true)
                 Text(metric(hour.temperatureC, "°"))
@@ -732,7 +782,7 @@ struct ForecastScreen: View {
               )
               .accessibilityElement(children: .ignore)
               .accessibilityLabel(
-                "\(index == 0 ? "Now" : hour.time.formatted(date: .omitted, time: .shortened)), \(period?.condition ?? "condition unavailable"), temperature \(metric(hour.temperatureC, " degrees")), precipitation \(metric(hour.precipitationMm, " millimetres")), humidity \(metric(hour.relativeHumidityPercent, " percent"))"
+                "\(hour.time <= now ? "Now" : hour.time.formatted(date: .omitted, time: .shortened)), \(period?.condition ?? "condition unavailable"), temperature \(metric(hour.temperatureC, " degrees")), precipitation \(metric(hour.precipitationMm, " millimetres")), humidity \(metric(hour.relativeHumidityPercent, " percent"))"
               )
               .accessibilityIdentifier("hourlyForecastCard-\(index)")
             }
@@ -751,6 +801,9 @@ struct ForecastScreen: View {
     let days = forecastDayGroups(region)
     return VStack(alignment: .leading, spacing: 10) {
       Text("7-day forecast").font(.title2.bold())
+      if let message = model.precipitationError {
+        Text(message).font(.caption).foregroundStyle(.secondary)
+      }
       if days.isEmpty {
         Text("No current forecast periods are available.").foregroundStyle(.secondary)
       }
@@ -760,15 +813,14 @@ struct ForecastScreen: View {
           let night = periods.first { $0.temperatureClass == "low" }
           HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-              Text(dailyTitle(for: daytime, index: index))
+              Text(ForecastRefreshPolicy.dayTitle(for: daytime, at: now, calendar: chartCalendar))
                 .font(.subheadline.bold())
                 .accessibilityIdentifier("forecast-day-\(daytime.name)")
               Text(daytime.start.formatted(.dateTime.month(.abbreviated).day()))
                 .font(.caption2).foregroundStyle(.secondary)
             }
             .frame(width: 56, alignment: .leading)
-            Image(systemName: daytime.weatherIcon.symbolName)
-              .symbolRenderingMode(.monochrome).foregroundStyle(.tint)
+            ForecastConditionSymbol(icon: daytime.weatherIcon)
               .font(.title2).frame(width: 36)
               .accessibilityLabel(daytime.weatherIcon.label)
               .accessibilityIdentifier("forecast-condition-\(daytime.name)")
@@ -829,7 +881,7 @@ struct ForecastScreen: View {
 
   private func forecastDayGroups(_ region: ForecastRegion) -> [[ForecastPeriod]] {
     var groups: [[ForecastPeriod]] = []
-    for period in region.periods.filter({ $0.end > Date() }).sorted(by: { $0.start < $1.start }) {
+    for period in region.periods.filter({ $0.end > now }).sorted(by: { $0.start < $1.start }) {
       let isNight = period.temperatureClass == "low"
       if isNight, !groups.isEmpty,
         !groups[groups.count - 1].contains(where: { $0.temperatureClass == "low" })
@@ -845,20 +897,17 @@ struct ForecastScreen: View {
     return Array(groups.prefix(7))
   }
 
-  private func dailyTitle(for period: ForecastPeriod, index: Int) -> String {
-    if index == 0 { return "Today" }
-    let day = period.name.split(separator: " ").first.map(String.init) ?? period.name
-    return day.count > 3 ? String(day.prefix(3)) : day
-  }
-
   @ViewBuilder private var hourlySection: some View {
     VStack(alignment: .leading, spacing: 12) {
       Text("Next 72 hours").font(.title2.bold())
-      if model.hourlyLoading && model.hourly == nil {
+      if let message = model.hourlyError {
+        Text(message).font(.caption).foregroundStyle(.secondary)
+      }
+      if model.hourlyLoading && currentHourly == nil {
         ProgressView("Loading hourly forecast…")
           .accessibilityIdentifier("hourlyForecastInitialLoading")
       }
-      if let hourly = model.hourly {
+      if let hourly = currentHourly {
         let axis = HourlyDayAxis(start: hourly.start, end: hourly.end, calendar: chartCalendar)
         let fullDuration = axis.domain.upperBound.timeIntervalSince(axis.domain.lowerBound)
         Text("\(hourly.source) · \(hourly.completeHours) of \(hourly.hours.count) complete hours")
@@ -884,7 +933,7 @@ struct ForecastScreen: View {
         Text(
           "Pinch to zoom, drag sideways to move through time, or tap a column header to change the chart."
         )
-          .font(.caption).foregroundStyle(.secondary)
+        .font(.caption).foregroundStyle(.secondary)
         ScrollView(.horizontal) {
           Grid(alignment: .leading, horizontalSpacing: 18, verticalSpacing: 12) {
             GridRow {
@@ -1066,7 +1115,8 @@ struct ForecastScreen: View {
 
   private func hourlyViewportLabel(fullDuration: TimeInterval) -> String {
     guard hourlyVisibleDuration != nil else { return "Full range" }
-    let hours = max(1, Int((effectiveHourlyVisibleDuration(fullDuration: fullDuration) / 3_600).rounded()))
+    let hours = max(
+      1, Int((effectiveHourlyVisibleDuration(fullDuration: fullDuration) / 3_600).rounded()))
     return "\(hours)-hour view"
   }
 
@@ -1086,6 +1136,60 @@ func metric(_ value: Double?, _ suffix: String = "") -> String {
   value.map { $0.formatted(.number.precision(.fractionLength(0...1))) + suffix } ?? "—"
 }
 
+/// Keep one weather palette across the hero, hourly cards and daily rows.
+struct ForecastConditionSymbol: View {
+  let icon: ForecastWeatherIcon
+  var onHero = false
+  @Environment(\.colorScheme) private var colorScheme
+
+  private var colours: (Color, Color, Color) {
+    let darkSurface = onHero || colorScheme == .dark
+    let sun = Color(hex: "#ffd36f")
+    let cloud = Color(hex: onHero ? "#d9e9ef" : darkSurface ? "#aec3d1" : "#7c94a6")
+    let softCloud = Color(hex: onHero ? "#e9f3f6" : darkSurface ? "#c8d8e2" : "#95adbc")
+    let rain = Color(hex: darkSurface ? "#76d6ff" : "#0878c9")
+    let snow = Color(hex: darkSurface ? "#d7f6ff" : "#397694")
+    let mist = Color(hex: darkSurface ? "#b9cdd7" : "#718b9b")
+    let lightning = Color(hex: "#ffd15c")
+    switch icon {
+    case .clearDay, .clearNight: return (sun, sun, sun)
+    case .partlyCloudyDay, .partlyCloudyNight: return (softCloud, sun, sun)
+    case .cloudy: return (cloud, cloud, cloud)
+    case .rain, .drizzle: return (cloud, rain, rain)
+    case .thunderstorms: return (cloud, lightning, rain)
+    case .snow, .hail: return (cloud, snow, snow)
+    case .sleet: return (cloud, rain, snow)
+    case .fog: return (cloud, mist, mist)
+    case .hazeDay, .hazeNight: return (mist, sun, sun)
+    case .smoke: return (mist, cloud, cloud)
+    case .wind: return (rain, rain, rain)
+    case .unknown: return (mist, mist, mist)
+    }
+  }
+
+  var body: some View {
+    if icon == .thunderstorms {
+      // The rain/bolt symbol shares a palette layer for cloud and lightning.
+      // Overlay the native bolt-only layer to colour it independently.
+      ZStack {
+        Image(systemName: icon.symbolName)
+          .symbolRenderingMode(.palette)
+          .foregroundStyle(colours.0, colours.2)
+        Image(systemName: "cloud.bolt.fill")
+          .symbolRenderingMode(.palette)
+          .foregroundStyle(Color.clear, colours.1)
+      }
+      .accessibilityElement(children: .ignore)
+      .accessibilityAddTraits(.isImage)
+      .accessibilityLabel(icon.label)
+    } else {
+      Image(systemName: icon.symbolName)
+        .symbolRenderingMode(.palette)
+        .foregroundStyle(colours.0, colours.1, colours.2)
+    }
+  }
+}
+
 struct StatusMessage: View {
   let text: String
   var symbol = "info.circle"
@@ -1096,8 +1200,8 @@ struct StatusMessage: View {
   }
 }
 
-private extension String {
-  var nilIfEmpty: String? {
+extension String {
+  fileprivate var nilIfEmpty: String? {
     let value = trimmingCharacters(in: .whitespacesAndNewlines)
     return value.isEmpty ? nil : value
   }

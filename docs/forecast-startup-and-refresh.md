@@ -2,6 +2,33 @@
 
 Implemented 2026-09-07 in the native iOS client.
 
+## 2026-10-09 forecast freshness
+
+The Forecast screen rechecks display validity every minute while active and
+immediately on return to the foreground. Elapsed daily periods and model hours
+are removed even if the network is unavailable; the saved server `stale` flag is
+also checked against the current clock. The hero never falls back to an expired
+period, and “Today” is based on the local calendar date rather than row position.
+The hourly chart, table and 24-hour cards use the same remaining model hours;
+missing values stay missing. Expired briefing text is omitted.
+
+Network reconnection requests a fresh forecast for the existing selection. If an
+update is in progress, it finishes before the reconnect check starts. A network
+path being available is not proof the server is reachable; request failures are
+still reported. Background suspension does not require background execution.
+
+The hero shows the last fully successful update time alongside the bulletin's
+issue time. Hourly, precipitation and observation failures are identified in
+their own sections. Any partial failure preserves that last-successful timestamp
+until all required sections recover. Offline saved data is explicitly labelled.
+Forecast and nearby-observation checks revalidate HTTP data with the server.
+Saved snapshots continue to provide instant display without clearing the screen.
+
+Regression tests cover local midnight, expiry after several days, retained
+missing hourly values, offline/reconnect transitions, cache revalidation and
+partial-refresh recovery. These changes are developed and tested locally; they
+do not alter server deployment or ETL schedules.
+
 ## Silent-refresh verification
 
 The silent-refresh update passed all 96 unit tests and three focused simulator
