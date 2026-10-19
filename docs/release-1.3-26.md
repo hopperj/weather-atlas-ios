@@ -54,6 +54,12 @@ formatting and diff checks passed. Simulator fixtures are synthetic, not evidenc
 of live weather coverage. Server deployment/results are tracked in the
 [server release notes](../../weatherapp/docs/release-2026-10-19.md).
 
+On October 19 the updated API/web code (`9b08846`) was deployed to sparky. Public
+HTTPS readiness and actual GDPS/RDPS/HRDPS point responses passed, including the
+website's contract validation. This native feature commit is `384b20f`; its new
+Astronomy tab can now be tested against the fixed public server. This is not a
+claim that a signed build was uploaded or installed.
+
 Still required before public distribution: real-device/accessibility checks,
 live Astronomy horizon/latency review, and normal signing, archive and App Store
 Connect steps. Specialist astronomy feeds remain separate roadmap work.
