@@ -26,10 +26,40 @@ FORECAST_GATES = {stage: threading.Event() for stage in ("bulletin", "optional")
 for forecast_gate in FORECAST_GATES.values():
     forecast_gate.set()
 FORECAST_TEMPERATURE_OFFSET = 0.0
+FORECAST_PRECIPITATION_OVERRIDE = None
 
 
 def time(hours=0):
     return (NOW + timedelta(hours=hours)).isoformat().replace("+00:00", "Z")
+
+
+def astronomy_fixture(query):
+    """Synthetic UI contract, not astronomical calculations or production data."""
+    frames = [dict(time=time(h), cloudPercent=15 if h < 10 else 75,
+                   temperatureC=9, humidityPercent=80, windKmh=10, gustKmh=18,
+                   dewPointC=5.5, dewRisk=False, rainMm=0, rainStart=time(h-1),
+                   sunAltitudeDegrees=-30, moonAltitudeDegrees=-12,
+                   moonIlluminatedPercent=25, moonPhaseDegrees=60) for h in range(36)]
+    interval = dict(start=time(4), end=time(8), minutes=240)
+    return dict(schemaVersion=1, generatedAt=time(), preview=True,
+                latitude=float(query.get("latitude", [44.65])[0]),
+                longitude=float(query.get("longitude", [-63.57])[0]),
+                timeZone="America/Halifax", product=query.get("product", ["gdps"])[0],
+                source="Synthetic observing fixture", runTime=time(-6), stale=False,
+                mode=query.get("mode", ["deep_sky"])[0], ruleVersion="fixture-v1",
+                method="Synthetic UI fixture. Native times and nulls are preserved.",
+                limitations=["Total-cloud preview; seeing and transparency unavailable."],
+                sample=None, frames=frames, unavailableFields=["lowCloudPercent", "middleCloudPercent", "highCloudPercent", "seeing", "transparency"],
+                nights=[dict(date=(NOW + timedelta(days=i)).date().isoformat(),
+                    start=time(24*i), end=time(24*(i+1)),
+                    state="window" if i == 0 else "insufficient_data",
+                    summary="Cloud, wind and precipitation meet your limits." if i == 0 else "Weather coverage is incomplete.",
+                    events=dict(sunset=time(2+24*i), sunrise=time(14+24*i),
+                                astronomicalDusk=time(4+24*i), astronomicalDawn=time(12+24*i),
+                                moonrise=None, moonset=time(3+24*i)),
+                    darkness=[interval] if i == 0 else [], moonlessDarkness=[interval] if i == 0 else [],
+                    windows=[interval] if i == 0 else [], moonIlluminatedPercent=25,
+                    moonPhaseDegrees=60) for i in range(7)])
 
 
 def tile():
@@ -78,7 +108,7 @@ def golf_fixture(query):
         ("maxWindKmh", "max_wind_kmh", 25), ("maxRainMm", "max_rain_mm", 1),
         ("maxPopPercent", "max_pop_percent", 40)]}
     days = []
-    for offset in range(7):
+    for offset in range(int(param("days", "7"))):
         tee = (start + timedelta(days=offset)).astimezone(timezone.utc)
         def at(hours):
             return (tee + timedelta(hours=hours)).isoformat().replace("+00:00", "Z")
@@ -115,7 +145,7 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
     def do_GET(self):
-        global FORECAST_DELAY, CATALOGUE_DELAY, FORECAST_TEMPERATURE_OFFSET
+        global FORECAST_DELAY, CATALOGUE_DELAY, FORECAST_TEMPERATURE_OFFSET, FORECAST_PRECIPITATION_OVERRIDE
         parsed = urlparse(self.path)
         path, query = parsed.path, parse_qs(parsed.query)
         if path == "/test/forecast-refresh":
@@ -123,12 +153,15 @@ class Handler(BaseHTTPRequestHandler):
                 for gate in FORECAST_GATES.values():
                     gate.set()
                 FORECAST_TEMPERATURE_OFFSET = 0.0
+                FORECAST_PRECIPITATION_OVERRIDE = None
             for stage in query.get("hold", []):
                 FORECAST_GATES[stage].clear()
             for stage in query.get("release", []):
                 FORECAST_GATES[stage].set()
             if "temperature_offset" in query:
                 FORECAST_TEMPERATURE_OFFSET = float(query["temperature_offset"][0])
+            if "precipitation_mm" in query:
+                FORECAST_PRECIPITATION_OVERRIDE = float(query["precipitation_mm"][0])
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
@@ -157,7 +190,7 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({"delay": FORECAST_DELAY}).encode())
             return
         if path.startswith("/api/v1/forecast/"):
-            stage = "optional" if path.endswith(("/hourly", "/precipitation")) else "bulletin"
+            stage = "optional" if path.endswith(("/hourly", "/official-hourly", "/precipitation")) else "bulletin"
             FORECAST_GATES[stage].wait(timeout=30)
             clock.sleep(FORECAST_DELAY)
         if path == "/test/playback-events":
@@ -185,7 +218,9 @@ class Handler(BaseHTTPRequestHandler):
                 PLAYBACK_EVENTS.append(dict(frame=frame, event="sent", at=clock.monotonic()))
             return
         data = None
-        if path == "/api/v1/products":
+        if path == "/api/v1/astronomy/forecast":
+            data = astronomy_fixture(query)
+        elif path == "/api/v1/products":
             # Research products deliberately sort first, like a newly added custom run.
             data = {"items": [dict(code=code, name=code.upper(), description="Fixture model", kind="forecast", priority=i+1, latestRunTime=time(-6)) for i, code in enumerate(["flexpart_smoke", "custom_run_123", "hrdps", "gdps"])]}
         elif path.endswith("/domains"):
@@ -238,6 +273,9 @@ class Handler(BaseHTTPRequestHandler):
                         f"PREVIOUS Sunny; CURRENT {current['periods'][0]['condition']}."])
         elif path in ("/api/v1/observations/nearby", "/api/v1/observations/stations"):
             data = dict(generatedAt=time(), items=[STATION], nextOffset=None)
+            if float(query.get("latitude", ["44.65"])[0]) > 45.5:
+                data["items"] = [{**STATION, "observation": {
+                    **STATION["observation"], "quality": {}}}]
         elif path == "/api/v1/observations/stations/CAAW/history":
             data = dict(stationId="CAAW", field=query.get("field", ["temperatureC"])[0],
                         items=[dict(time=time(-i), value=14+i/10 if i != 3 else None) for i in range(48)])
@@ -267,15 +305,27 @@ class Handler(BaseHTTPRequestHandler):
             data = dict(latitude=44.65, longitude=-63.57, runTime=time(-6), validTime=time(), values=[
                 dict(field="air_temperature_2m", variable="air_temperature", level="2m_agl", value=22, unit="degC", nodata=False)])
         elif path == "/api/v1/forecast/hourly":
+            wet = query.get("area_id") == ["sydney-fixture"]
             data = dict(regionId=query.get("area_id", [REGION["id"]])[0], source="ECCC GDPS", generatedAt=time(), start=time(), end=time(72),
                         availableHours=71, completeHours=71, hours=[
                             dict(time=time(i), runTime=time(-6), precipitationStart=time(i-1),
                                  status="missing" if i==5 else "complete", temperatureC=None if i==5 else round(18+5*math.sin(i/6), 1),
                                  relativeHumidityPercent=None if i==5 else round(65+10*math.sin(i/8)),
-                                 precipitationMm=None if i==5 else 1.6 if i % 11 == 0 else 0,
+                                 precipitationMm=None if i==5 else 1.2 if wet and i == 1 else 1.6 if i % 11 == 0 else 0,
                                  windKmh=None if i==5 else round(18+5*math.sin(i/12)),
                                  gustKmh=None if i==5 else round(28+5*math.sin(i/12)))
                             for i in range(72)])
+        elif path == "/api/v1/forecast/official-hourly":
+            # Rainy regional wording deliberately disagrees with clear hourly
+            # conditions, reproducing the Kentville presentation regression.
+            wet = query.get("area_id") == ["sydney-fixture"]
+            data = dict(regionId=query.get("area_id", [REGION["id"]])[0],
+                        source="ECCC official hourly forecast", generatedAt=time(), issuedAt=time(),
+                        providerLocation="Halifax", timeZone="America/Halifax", stale=False,
+                        sourceUrl="https://weather.gc.ca/", hours=[
+                            dict(time=time(i), condition="Chance of showers" if wet else "Clear" if i < 8 else "Sunny",
+                                 popPercent=60 if wet else 0, temperatureC=18+i/10,
+                                 iconCode="36" if wet else "30" if i < 8 else "00") for i in range(1, 25)])
         elif path == "/api/v1/forecast/precipitation":
             data = dict(regionId=query.get("area_id", [REGION["id"]])[0], issuedAt=REGION["issuedAt"],
                         source="ECCC GDPS", generatedAt=time(), periods=[
@@ -290,6 +340,10 @@ class Handler(BaseHTTPRequestHandler):
                      frames=[dict(id=f"{code}-{i}", validTime=time(-1+i/6), tileUrl="/tiles/fixture/{z}/{x}/{y}.png",
                                   bounds=[-69,41,-52,50]) for i in range(6)])
                 for code, name, kind in [("radar_rain", "Radar · rain rate", "radar"), ("satellite_natural", "Satellite · natural colour", "satellite")]]}
+        if data is not None and path == "/api/v1/forecast/hourly" and FORECAST_PRECIPITATION_OVERRIDE is not None:
+            for hour in data["hours"]:
+                if hour["status"] != "missing":
+                    hour["precipitationMm"] = FORECAST_PRECIPITATION_OVERRIDE
         if data is not None and path.startswith("/api/v1/forecast/") and FORECAST_TEMPERATURE_OFFSET:
             # Copy the synthetic response, never mutate shared region fixtures.
             data = json.loads(json.dumps(data))

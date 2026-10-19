@@ -6,7 +6,7 @@ import XCTest
 final class GolfTests: XCTestCase {
   @MainActor func testEveryGolfMoodAssetRendersAndMergedProgressionIsVisible() throws {
     let view = VStack(spacing: 12) {
-      ForEach([Optional<GolfIssue>.none, .wind, .cold, .rain], id: \.self) { issue in
+      ForEach([Optional<GolfIssue>.none, .wind, .cold, .heat, .rain], id: \.self) { issue in
         HStack(spacing: 8) {
           ForEach(GolfRating.allCases, id: \.self) { rating in
             VStack {
@@ -19,7 +19,7 @@ final class GolfTests: XCTestCase {
     }
     .padding(20).background(Color(.systemGroupedBackground))
     for rating in GolfRating.allCases {
-      for issue in [Optional<GolfIssue>.none, .wind, .cold, .rain] {
+      for issue in [Optional<GolfIssue>.none, .wind, .cold, .heat, .rain] {
         let image = try XCTUnwrap(GolfMoodIcon.image(rating: rating, issue: issue))
         XCTAssertGreaterThan(image.size.width, 200)
         XCTAssertGreaterThan(image.size.height, 200)
@@ -33,6 +33,26 @@ final class GolfTests: XCTestCase {
       attachment.name = "Bundled golf mood faces – \(scheme == .dark ? "dark" : "light")"
       attachment.lifetime = .keepAlways
       add(attachment)
+    }
+  }
+
+  @MainActor func testHeatSpritesAreDistinctAndGoodOutlooksKeepPlainFaces() throws {
+    var heatSprites = Set<Data>()
+    for rating in [GolfRating.mixed, .poor, .veryPoor] {
+      let heat = try XCTUnwrap(GolfMoodIcon.image(rating: rating, issue: .heat)?.pngData())
+      let cold = try XCTUnwrap(GolfMoodIcon.image(rating: rating, issue: .cold)?.pngData())
+      let plain = try XCTUnwrap(GolfMoodIcon.image(rating: rating, issue: nil)?.pngData())
+      XCTAssertNotEqual(heat, cold)
+      XCTAssertNotEqual(heat, plain)
+      heatSprites.insert(heat)
+      let day = try fixture(state: "outside", score: 40, rating: rating.rawValue, issue: "heat").days[0]
+      XCTAssertEqual(day.outlookIssue, .heat)
+    }
+    XCTAssertEqual(heatSprites.count, 3)
+    for rating in [GolfRating.excellent, .good] {
+      XCTAssertEqual(
+        GolfMoodIcon.image(rating: rating, issue: .heat)?.pngData(),
+        GolfMoodIcon.image(rating: rating, issue: nil)?.pngData())
     }
   }
 

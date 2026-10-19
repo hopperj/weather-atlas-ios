@@ -1,11 +1,15 @@
 import SwiftUI
 
+private enum MoreDestination: Hashable { case saved, settings }
+
 struct ContentView: View {
   @StateObject private var store: AppStore
   @StateObject private var location = ForecastLocation()
   @StateObject private var connection = ForecastConnectionMonitor()
   @Environment(\.scenePhase) private var scenePhase
   @State private var hasOpenedMap = false
+  @State private var hasOpenedAstronomy = false
+  @State private var morePath: [MoreDestination] = []
   init(configuration: AppConfiguration) {
     _store = StateObject(wrappedValue: AppStore(configuration: configuration))
   }
@@ -30,19 +34,52 @@ struct ContentView: View {
         .tabItem { Label("Golf", systemImage: "figure.golf") }
         .tag(4)
 
-      SavedScreen()
-        .tabItem { Label("Saved", systemImage: "bookmark") }
-        .tag(2)
+      Group {
+        if hasOpenedAstronomy || store.selectedTab == 5 {
+          NavigationStack {
+            AstronomyScreen(
+              api: store.api,
+              seed: ObservingSite(
+                name: store.forecast.region?.displayName ?? store.defaultForecastName,
+                latitude: store.forecastMapFocus.latitude,
+                longitude: store.forecastMapFocus.longitude))
+          }
+        } else {
+          Color.clear
+        }
+      }
+      .tabItem { Label("Astronomy", systemImage: "moon.stars") }
+      .tag(5)
 
-      SettingsScreen()
-        .tabItem { Label("Settings", systemImage: "gearshape") }
-        .tag(3)
+      NavigationStack(path: $morePath) {
+        List {
+          NavigationLink(value: MoreDestination.saved) {
+            Label("Saved", systemImage: "bookmark")
+          }.accessibilityIdentifier("moreSaved")
+          NavigationLink(value: MoreDestination.settings) {
+            Label("Settings", systemImage: "gearshape")
+          }.accessibilityIdentifier("moreSettings")
+        }
+        .navigationTitle("More")
+        .navigationDestination(for: MoreDestination.self) { destination in
+          switch destination {
+          case .saved: SavedScreen()
+          case .settings: SettingsScreen()
+          }
+        }
+      }
+      .tabItem { Label("More", systemImage: "ellipsis") }
+      .tag(3)
     }
     .id(store.serverURL)
     .tint(Color(red: 0.0, green: 0.47, blue: 0.52))
     .onAppear { WeatherDiagnostics.startup.notice("Forecast root appeared") }
     .onOpenURL { store.openWidgetURL($0) }
-    .onChange(of: store.selectedTab) { _, tab in if tab == 0 { hasOpenedMap = true } }
+    .onChange(of: store.selectedTab) { _, tab in
+      if tab == 0 { hasOpenedMap = true }
+      if tab == 5 { hasOpenedAstronomy = true }
+      if tab == 3 { morePath = [] }
+    }
     .onChange(of: connection.online, initial: true) { _, online in
       store.forecast.networkAvailable = online
     }

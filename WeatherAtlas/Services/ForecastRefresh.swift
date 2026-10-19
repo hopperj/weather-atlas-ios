@@ -36,9 +36,11 @@ struct ForecastSnapshot: Codable {
   let usingDefaultLocation: Bool
   let lastUpdated: Date?
   var defaultLocationID: String? = nil
+  var officialHourly: OfficialHourlyForecast? = nil
 
   private enum CodingKeys: String, CodingKey {
-    case storedAt, selectionID, region, hourly, precipitation, lastUpdated, defaultLocationID
+    case storedAt, selectionID, region, hourly, precipitation, lastUpdated, defaultLocationID,
+      officialHourly
     // Preserve forecasts saved before the default became configurable.
     case usingDefaultLocation = "usingHalifaxFallback"
   }

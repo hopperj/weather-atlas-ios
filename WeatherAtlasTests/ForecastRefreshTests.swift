@@ -3,6 +3,37 @@ import XCTest
 @testable import WeatherAtlas
 
 final class ForecastRefreshTests: XCTestCase {
+  @MainActor func testOfficialHoursRestoreWithSnapshotAndLegacySnapshotsRemainReadable() throws {
+    let now = Date()
+    let cache = store(defaults())
+    var saved = snapshot(now: now)
+    saved.officialHourly = OfficialHourlyForecast(
+      regionId: "chosen", source: "ECCC official hourly forecast", generatedAt: now,
+      issuedAt: now, providerLocation: "Kentville", timeZone: "America/Halifax", stale: false,
+      hours: [
+        OfficialForecastHour(
+          time: now, condition: "Clear", popPercent: 0, temperatureC: 1, iconCode: "30")
+      ])
+    cache.save(saved)
+    let model = ForecastModel(api: ForecastTestServer(), cache: cache)
+    model.restore(preferredID: "chosen")
+    XCTAssertEqual(model.officialHourly?.hours.first?.weatherIcon, .clearNight)
+    XCTAssertEqual(model.officialHourly?.hours.first?.popPercent, 0)
+
+    var legacyJSON = try XCTUnwrap(
+      JSONSerialization.jsonObject(with: JSONEncoder().encode(saved)) as? [String: Any])
+    legacyJSON.removeValue(forKey: "officialHourly")
+    let legacy = try JSONDecoder().decode(
+      ForecastSnapshot.self, from: JSONSerialization.data(withJSONObject: legacyJSON))
+    XCTAssertNil(legacy.officialHourly)
+    XCTAssertEqual(legacy.region.id, "chosen")
+    cache.save(legacy)
+    let oldModel = ForecastModel(api: ForecastTestServer(), cache: cache)
+    oldModel.restore(preferredID: "chosen")
+    XCTAssertNotNil(oldModel.region)
+    XCTAssertNil(oldModel.officialHourly)
+  }
+
   func testGPSCannotCancelFirstBulletinButCanReplaceItOnceVisibleOrFailed() {
     let now = Date()
     let fix = ForecastLocationFix(latitude: 46, longitude: -60, measuredAt: now)
@@ -188,6 +219,7 @@ final class ForecastRefreshTests: XCTestCase {
       baseURL: URL(string: "https://weather.test")!, session: URLSession(configuration: config))
     for path in [
       "/api/v1/forecast/regions", "/api/v1/forecast/nearest", "/api/v1/forecast/hourly",
+      "/api/v1/forecast/official-hourly",
       "/api/v1/forecast/precipitation",
       "/api/v1/observations/nearby",
     ] {

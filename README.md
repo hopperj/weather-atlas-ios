@@ -33,6 +33,25 @@ against the selected artwork. UI tests were not rerun for this asset-only change
 That icon-only build reported an unrelated interface-orientation warning, which
 is resolved by the orientation configuration described below.
 
+## Astronomy / Clear sky preview (2026-10-19)
+
+Open the **Astronomy** tab immediately beside **Golf**, a Saved place, or the map's
+point-sample sheet. The native **More** menu retains Saved and Settings.
+The former Astronomy button above the Forecast is removed. Exact pins,
+coordinate entry, foreground approximate GPS and independent saved observing
+sites feed the shared server endpoint `/api/v1/astronomy/forecast`. Native weather
+times, Sun/Moon/twilight events, dated night sessions, explainable observing
+windows and dim red viewing are included. Total cloud only: low/middle/high cloud,
+seeing and transparency are explicitly unavailable. Missing weather is not calm
+or clear weather; events remain visible beyond a model's collected horizon.
+
+The updated API must be available before testing/distributing a new app build.
+No new phone dependency or permission category is added; no physical installation
+or App Store submission was performed. Full design/data gates:
+[server implementation notes](../weatherapp/docs/astronomy.md). Deployment status:
+[server release notes](../weatherapp/docs/release-2026-10-19.md). The
+[1.3 (26) release notes](docs/release-1.3-26.md) summarize the native changes.
+
 ## Target devices and screen orientations
 
 Build 1.0 (16) targets **iPhone only** (`TARGETED_DEVICE_FAMILY = 1`) for the app,
@@ -79,6 +98,34 @@ change; Settings → About should show **1.0 (14)**. No manual connection setup 
 required. See [fixed HTTPS endpoint](docs/fixed-https-endpoint.md).
 
 ## Implemented
+
+- Release version is now **1.3 (26)** because Apple closed the 1.2 pre-release
+  train. The app and widget inherit the same version/build settings in Debug
+  and Release. Create a fresh archive; existing 1.2 archives retain their old
+  metadata. Use a matching 1.3 version in App Store Connect for the next release.
+  Heat-limited Golf outlooks now have matching Mixed, Poor and Very poor faces
+  without toques, with red thermometers that fill progressively as conditions
+  worsen. Poor adds one sweat bead and Very poor adds several; Mixed remains
+  sweat-free. Excellent and Good retain their plain faces.
+  Hourly forecast icons and POP now use the matching official ECCC hour instead
+  of repeating a day/night bulletin's icon. GDPS precipitation amounts are
+  labelled separately; missing hours stay unavailable and trace amounts display
+  as `<0.1 mm` rather than zero.
+  The hourly strip starts with the first available official hour, keeping all
+  24 issued hours instead of adding an empty "Now" card. The current-weather
+  card shows positive POP and observed/GDPS precipitation with source/time
+  labels; missing and zero badges are hidden.
+  Golf now saves multiple dated tee times with independent Canadian courses or
+  map pins, course-name suggestions and course-local time zones. Each saved round
+  opens its own focused outlook; far-future rounds remain pending rather than
+  generating seven daily assessments. Tee times automatically stay in chronological
+  order after adding, editing or reopening. Add tee time is the sole main-page
+  creation action; course search and map pins are available inside its editor.
+  The duplicate bottom course-search bar is removed.
+  The course map starts at the selected forecast location, with up to five
+  most-used saved courses offered below the chooser. Selecting a calendar day
+  closes the calendar immediately.
+  See [saved golf rounds](docs/golf-round-planner.md).
 
 - Build 1.2 (25) displays five face-based Golf outlooks instead of `/100`: Excellent, Good,
   Mixed, Poor and Very poor. Weather cues identify wind, cold or rain for Mixed

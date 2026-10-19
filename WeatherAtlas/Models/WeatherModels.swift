@@ -210,13 +210,63 @@ struct ForecastPeriod: Codable, Hashable, Identifiable, Sendable {
   }
 
   var precipitationLikelihoodDescription: String? {
+    ForecastPrecipitationPresentation.likelihood(popPercent: popPercent, condition: condition)
+  }
+
+  func precipitationDescription(estimatedMm: Double?, loading: Bool = false) -> String? {
+    // Preserve issued ranges and snow units; never derive millimetres from POP.
+    if let amount = issuedPrecipitationAmount {
+      return "Precipitation: "
+        + ForecastPrecipitationPresentation.issuedAmountLabel(
+          amount, popPercent: popPercent, condition: condition)
+    }
+    if loading && estimatedMm == nil
+      && ForecastPrecipitationPresentation.hasRisk(popPercent: popPercent, condition: condition)
+    {
+      return "Precipitation: loading amount…"
+    }
+    return ForecastPrecipitationPresentation.amountLabel(
+      millimetres: estimatedMm, popPercent: popPercent, condition: condition
+    ).map { "Precipitation: \($0)" }
+  }
+}
+
+/// Display policy only. Keep raw API amounts for plots, totals and calculations.
+enum ForecastPrecipitationPresentation {
+  static let uncertainAmount = "Amount uncertain"
+
+  static func hasRisk(popPercent: Double?, condition: String = "") -> Bool {
+    // An issued zero takes precedence over broader precipitation wording.
+    if let pop = popPercent, pop.isFinite, (0...100).contains(pop) { return pop > 0 }
+    return likelihood(popPercent: nil, condition: condition) != nil
+  }
+
+  static func amountLabel(
+    millimetres: Double?, popPercent: Double?, condition: String = ""
+  ) -> String? {
+    if let amount = millimetres, amount.isFinite, amount > 0 {
+      if amount < 0.1 { return "<0.1 mm" }
+      return amount.formatted(.number.precision(.fractionLength(0...1))) + " mm"
+    }
+    if hasRisk(popPercent: popPercent, condition: condition) { return uncertainAmount }
+    return millimetres == 0 ? "0 mm" : nil
+  }
+
+  static func issuedAmountLabel(
+    _ amount: String, popPercent: Double?, condition: String = ""
+  ) -> String {
+    // Match pure zeros only, not ranges such as "0 to 2 mm" or trace amounts.
+    let isZero =
+      amount.trimmingCharacters(in: .whitespacesAndNewlines).range(
+        of: "^0+(?:[.,]0+)?\\s*(?:mm|cm)?$", options: [.regularExpression, .caseInsensitive]) != nil
+    return isZero && hasRisk(popPercent: popPercent, condition: condition)
+      ? uncertainAmount : amount
+  }
+
+  static func likelihood(popPercent: Double?, condition: String) -> String? {
     if let pop = popPercent, pop.isFinite, (0...100).contains(pop) {
       return "\(pop.formatted(.number.precision(.fractionLength(0))))%"
     }
-    return precipitationOutlookDescription
-  }
-
-  private var precipitationOutlookDescription: String? {
     // Restate recognized bulletin wording, never infer a numerical probability.
     // Keep this conservative: unrecognized/negated descriptions remain untouched.
     var text = condition.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
@@ -244,19 +294,6 @@ struct ForecastPeriod: Codable, Hashable, Identifiable, Sendable {
     default: return nil
     }
     return "\(kind) \(possible ? "possible" : "expected")"
-  }
-
-  func precipitationDescription(estimatedMm: Double?, loading: Bool = false) -> String? {
-    // Keep issued ranges and units, including snow depth, exactly as supplied.
-    if let amount = issuedPrecipitationAmount { return "Precipitation: \(amount)" }
-    if let amount = estimatedMm, amount.isFinite, amount >= 0 {
-      let number =
-        amount > 0 && amount < 0.1
-        ? "<0.1" : amount.formatted(.number.precision(.fractionLength(0...1)))
-      return "Precipitation: \(number) mm"
-    }
-    guard (popPercent ?? 0) > 0 || precipitationOutlookDescription != nil else { return nil }
-    return loading ? "Precipitation: loading amount…" : "Precipitation: amount unavailable"
   }
 }
 
@@ -399,6 +436,199 @@ struct HourlyForecastHour: Codable, Hashable, Identifiable, Sendable {
   let gustKmh: Double?
 
   var id: Date { time }
+}
+
+struct OfficialHourlyForecast: Codable, Sendable {
+  let regionId: String
+  let source: String
+  let generatedAt: Date
+  let issuedAt: Date
+  let providerLocation: String
+  let timeZone: String
+  let stale: Bool
+  let hours: [OfficialForecastHour]
+
+  func isCurrent(for regionID: String, at now: Date) -> Bool {
+    regionId == regionID && !stale && issuedAt <= now.addingTimeInterval(300)
+      && now.timeIntervalSince(issuedAt) <= 86400
+  }
+}
+
+struct OfficialForecastHour: Codable, Hashable, Identifiable, Sendable {
+  let time: Date
+  let condition: String
+  let popPercent: Double?
+  let temperatureC: Double?
+  let iconCode: String?
+
+  var id: Date { time }
+  var weatherIcon: ForecastWeatherIcon {
+    // ECCC's night-only forecast icons occupy codes 30–39. Clear/30 must
+    // remain a moon even when its broader day/night bulletin is different.
+    let night =
+      iconCode.flatMap(Int.init).map { (30...39).contains($0) }
+      ?? condition.localizedCaseInsensitiveContains("clear")
+    return ForecastWeatherIcon(condition: condition, isNight: night)
+  }
+}
+
+/// Join only identical valid timestamps. Regional day/night wording is never
+/// an hourly prediction, and model millimetres cannot establish an hourly POP.
+struct ForecastHourPresentation: Identifiable {
+  let time: Date
+  let model: HourlyForecastHour?
+  let official: OfficialForecastHour?
+
+  var id: Date { time }
+  var condition: String {
+    guard let text = official?.condition.trimmingCharacters(in: .whitespacesAndNewlines),
+      !text.isEmpty
+    else { return "Conditions unavailable" }
+    return text
+  }
+  var weatherIcon: ForecastWeatherIcon { official?.weatherIcon ?? .unknown }
+  var temperatureC: Double? { official?.temperatureC ?? model?.temperatureC }
+  var popPercent: Double? {
+    official?.popPercent.flatMap { $0.isFinite && (0...100).contains($0) ? $0 : nil }
+  }
+  var modelPrecipitation: String {
+    ForecastPrecipitationPresentation.amountLabel(
+      millimetres: model?.precipitationMm, popPercent: popPercent,
+      condition: official?.condition ?? "") ?? "—"
+  }
+  var precipitationLabel: String {
+    modelPrecipitation == ForecastPrecipitationPresentation.uncertainAmount
+      ? modelPrecipitation : "GDPS \(modelPrecipitation)"
+  }
+  var precipitationAccessibilityLabel: String {
+    modelPrecipitation == ForecastPrecipitationPresentation.uncertainAmount
+      ? "precipitation amount uncertain" : "GDPS precipitation \(modelPrecipitation)"
+  }
+
+  static func upcoming(
+    regionID: String, model: HourlyForecast?, official: OfficialHourlyForecast?, at now: Date
+  ) -> [Self] {
+    let currentHour = Date(timeIntervalSince1970: floor(now.timeIntervalSince1970 / 3600) * 3600)
+    let modelHours = model?.regionId == regionID ? (model?.hours ?? []) : []
+    let officialHours =
+      official?.isCurrent(for: regionID, at: now) == true
+      ? (official?.hours ?? []) : []
+    let modelByTime = Dictionary(
+      modelHours.map { ($0.time, $0) }, uniquingKeysWith: { first, _ in first })
+    let officialByTime = Dictionary(
+      officialHours.map { ($0.time, $0) }, uniquingKeysWith: { first, _ in first })
+    // ECCC normally starts at the next whole hour. Do not prepend a model-only
+    // "Now" slot with no official condition, or lose the final official hour.
+    let firstOfficial = officialHours.filter {
+      $0.time >= currentHour && $0.time < currentHour.addingTimeInterval(86400)
+        && !$0.condition.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }.map(\.time).min()
+    let firstModel = modelHours.filter {
+      $0.time >= currentHour && $0.time < currentHour.addingTimeInterval(86400)
+        && $0.status != "missing"
+    }.map(\.time).min()
+    guard let start = firstOfficial ?? firstModel else { return [] }
+    let rows = (0..<24).map { offset in
+      let time = start.addingTimeInterval(Double(offset) * 3600)
+      return Self(time: time, model: modelByTime[time], official: officialByTime[time])
+    }
+    // Keep genuine interior gaps without adding empty cards beyond coverage.
+    guard
+      let last = rows.lastIndex(where: {
+        $0.official != nil || ($0.model != nil && $0.model?.status != "missing")
+      })
+    else { return [] }
+    return Array(rows[...last])
+  }
+}
+
+/// Near-current precipitation is separate from the forecast strip's start.
+/// A forecast hour three hours away is not current weather; a regional-period
+/// total is not an hourly amount. Missing values and issued zero remain distinct.
+struct CurrentForecastPrecipitation {
+  struct Probability {
+    let percent: Double
+    let hour: Date?  // nil explicitly means the current regional period.
+  }
+  struct Amount {
+    enum Source { case observation, model }
+    let source: Source
+    let millimetres: Double?
+    let trace: Bool
+    let start: Date
+    let end: Date
+    var displayValue: String {
+      if trace { return "Trace" }
+      guard let millimetres else { return "—" }
+      if millimetres < 0.1 { return "<0.1 mm" }
+      return millimetres.formatted(.number.precision(.fractionLength(0...1))) + " mm"
+    }
+  }
+  let probability: Probability?
+  let amount: Amount?
+  var isEmpty: Bool { probability == nil && amount == nil }
+  var amountIsUncertain: Bool { probability != nil && amount == nil }
+
+  init(
+    region: ForecastRegion, model: HourlyForecast?, official: OfficialHourlyForecast?,
+    observation: WeatherStation?, at now: Date
+  ) {
+    let hourStart = Date(timeIntervalSince1970: floor(now.timeIntervalSince1970 / 3600) * 3600)
+    func validPOP(_ value: Double?) -> Double? {
+      value.flatMap { $0.isFinite && (0...100).contains($0) ? $0 : nil }
+    }
+    let officialHour =
+      official?.isCurrent(for: region.id, at: now) == true
+      ? official?.hours.filter {
+        $0.time >= hourStart && $0.time <= hourStart.addingTimeInterval(3600)
+      }
+      .min(by: { $0.time < $1.time }) : nil
+    if let pop = validPOP(officialHour?.popPercent) {
+      // An issued 0% must not revive a higher, broader regional percentage.
+      probability = pop > 0 ? Probability(percent: pop, hour: officialHour?.time) : nil
+    } else if !region.stale, region.issuedAt <= now.addingTimeInterval(300),
+      now.timeIntervalSince(region.issuedAt) <= 86400,
+      let period = region.periods.first(where: { $0.start <= now && now < $0.end }),
+      let pop = validPOP(period.popPercent), pop > 0
+    {
+      probability = Probability(percent: pop, hour: nil)
+    } else {
+      probability = nil
+    }
+
+    if let observation, !observation.stale, observation.observation.expiresAt > now,
+      observation.observation.observedAt <= now.addingTimeInterval(300)
+    {
+      let reported = observation.value(.precipitationMm)
+      let positive = reported.flatMap { $0.isFinite && $0 > 0 ? $0 : nil }
+      let trace =
+        observation.observation.quality[StationField.precipitationMm.rawValue]?.state == "trace"
+      if positive != nil || trace {
+        let interval = observation.observation.intervals[StationField.precipitationMm.rawValue]
+        let end = interval?.end ?? observation.observation.observedAt
+        let start = interval?.start ?? end.addingTimeInterval(-3600)
+        if start < end, end <= now.addingTimeInterval(300) {
+          amount = Amount(
+            source: .observation, millimetres: positive, trace: trace, start: start, end: end)
+          return
+        }
+      }
+    }
+    if model?.regionId == region.id,
+      let hour = model?.hours.filter({
+        $0.precipitationStart <= now && now < $0.time && $0.status != "missing"
+          && $0.time.timeIntervalSince($0.precipitationStart) == 3600
+          && $0.runTime.map { $0 <= now } == true
+      }).min(by: { $0.time < $1.time }),
+      let value = hour.precipitationMm, value.isFinite, value > 0
+    {
+      amount = Amount(
+        source: .model, millimetres: value, trace: false,
+        start: hour.precipitationStart, end: hour.time)
+    } else {
+      amount = nil
+    }
+  }
 }
 
 /// Calendar-day ticks use local midnight, not fixed 24-hour steps (DST-safe).

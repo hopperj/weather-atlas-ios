@@ -326,3 +326,103 @@ the final build-2 code and passed:
 `/tmp/weatheratlas-build/Logs/Test/Test-WeatherAtlas-2026.09.07_17-29-28--0300.xcresult`.
 The temporary loopback fixture server was stopped after verification. The
 production weather server and ETL pipelines were not restarted or changed.
+
+## Hourly conditions correction (2026-10-17)
+
+The Next 24 hours cards now load `/api/v1/forecast/official-hourly` independently
+of the GDPS model, precipitation totals and observations. Icons, condition text
+and POP come only from the official row with the same valid timestamp. Official
+temperature takes precedence where provided; GDPS temperature remains a labelled
+fallback. Model humidity and hourly precipitation amounts remain GDPS values.
+No numerical probability or icon is inferred from a model amount or from a
+regional day/night bulletin. Day/night regional forecasts themselves are unchanged.
+
+This fixes Kentville's reported mismatch: a regional night described as a chance
+of showers was spreading rain icons across hourly cards even though newer official
+hours said Clear / 0% POP and GDPS returned 0 mm. Real disagreements between a
+published hourly rain risk and GDPS quantities remain visible, not overwritten.
+Positive model amounts below 0.1 mm are shown as `<0.1 mm`; missing data is `—`.
+
+Official hourly data is persisted as an optional addition to the existing v1
+forecast snapshot, so older saved forecasts remain readable. Refresh failures
+retain only still-valid matching-region hours. Stale or older-than-24-hour official
+forecasts are not used, late responses cannot replace a newer location selection,
+and absence of the official endpoint does not suppress model values. A fully
+successful refresh now includes the official hourly request.
+
+Night-only icon codes 30–39 follow ECCC's
+[forecast icon-code table](https://collaboration.cmc.ec.gc.ca/cmc/cmos/public_doc/msc-data/citypage-weather/forecast_conditions_icon_code_descriptions_e.csv);
+the art remains the app's native coloured symbols. This is an iOS client update:
+the existing server endpoint requires no deployment or ETL restart.
+
+Verification: 193 unit tests passed (six opt-in checks skipped), including
+timestamp joins, the Kentville case, stale/missing feeds, independent requests,
+legacy snapshot decoding and late-response protection. Three focused simulator
+UI tests passed: hourly-condition regression, existing current-conditions controls,
+and immediate saved forecasts during a delayed refresh. The unsigned Release app
+and widget build passed with matching 1.3 (26) metadata. No physical-device install,
+App Store upload, production deployment or ETL restart was performed.
+
+## Hourly start and current-card precipitation (2026-10-19)
+
+The hourly strip starts at the first current/upcoming valid official forecast
+hour rather than inserting a model-only "Now" card before ECCC's first hour.
+The join still uses exact timestamps, so the full 24 issued hours are retained.
+When official data is unavailable, the first non-missing model hour is the
+fallback start. Genuine interior gaps remain visible; empty cards are not added
+beyond the available coverage. A future first hour displays its actual time,
+not "Now". Stale and wrong-region data remain excluded.
+
+The current-weather card has an optional precipitation band. Positive numeric
+POP comes from the current/next official hour (no more than the next whole hour),
+with its ECCC time shown. Otherwise a published current regional-period percentage
+can be shown, explicitly labelled as a period probability. An issued official
+zero never falls back to a higher regional percentage. Missing and zero badges
+are hidden; no percentage is inferred from rainfall amounts or wording.
+
+Amounts prefer a fresh positive/trace observation and retain the observation's
+accumulation interval. Otherwise a positive GDPS one-hour amount whose interval
+contains now can be displayed. Observed and GDPS amounts have distinct labels and
+explicit start/end times. Later unrelated forecast hours and whole day/night
+totals are not presented as current precipitation. Traces stay "Trace" or
+`<0.1 mm`, not zero. The band stacks vertically at accessibility text sizes.
+
+Regression coverage includes the leading-hour mismatch, all 24 official hours,
+model-only leading missing hours/interior gaps, wrong-region/stale data, zero POP
+precedence, observations and traces, positive model amounts and exact intervals.
+The synthetic UI fixture now starts official data at the next hour, matching the
+real feed; its Sydney variant exercises positive POP/model amounts without a
+reported station amount. These are iOS client changes; no API deployment, ETL
+restart or production mutation is required.
+
+Verification: all 210 unit tests passed (seven opt-in tests skipped), plus four
+focused interface tests covering the first issued hour, positive POP/GDPS amount,
+observed trace, accessibility-size layout, and the existing map/save controls.
+The generic-iOS unsigned Release app/widget build passed as 1.3 (26). The local
+test server was stopped; no phone installation or production change was made.
+
+## Risk-aware precipitation labels (2026-10-19, development)
+
+Current-card, hourly and day/night precipitation labels no longer pair a positive
+POP with zero millimetres. A zero, missing or invalid amount with an indicated
+precipitation risk displays **Amount uncertain**, not an invented minimum amount.
+Positive amounts below 0.1 mm still display `<0.1 mm`. Issued ranges, trace wording
+and snow units remain intact; only pure issued zeros receive the uncertainty label.
+An explicit 0% overrides broader wet wording; where POP is absent, recognized wet
+wording can indicate risk. Dry zeros and missing data remain distinct.
+
+The current-card band can show the uncertainty state alongside positive POP when
+there is no positive/trace observed or model amount. Positive observed amounts
+retain their separately labelled past accumulation interval. Hourly risk comes
+only from the exact matching official hour, not from regional day/night wording.
+Accessibility labels use the same uncertainty wording and daily amounts can wrap.
+
+This policy matches the webapp. Raw API/model values, plots, totals, Golf scoring,
+ETL and saved snapshot schemas are unchanged. Production is not deployed by this
+client change; iOS users need a new build to receive it.
+
+Verification: 211 unit tests passed (seven opt-in checks skipped), plus five
+focused simulator UI tests, including positive POP with zero GDPS amounts,
+current-card uncertainty, existing positive/trace amounts and accessibility-size
+layout. The unsigned generic-iOS Release app/widget build passed as 1.3 (26).
+No App Store upload, physical-device installation or production change was made.

@@ -5,141 +5,293 @@ struct GolfScreen: View {
   @ObservedObject var settings: GolfSettingsStore
   @EnvironmentObject private var store: AppStore
   @Environment(\.scenePhase) private var scenePhase
-  @StateObject private var model = GolfModel()
-  @State private var firstDate = Date()
   @State private var refresh = 0
-  @State private var pickingLocation = false
-  @State private var pickingTime = false
-  private var zone: TimeZone { TimeZone(identifier: settings.value.timeZone) ?? .current }
-  private var localDate: String {
-    let formatter = DateFormatter()
-    formatter.calendar = Calendar(identifier: .gregorian)
-    formatter.locale = Locale(identifier: "en_US_POSIX")
-    formatter.timeZone = zone
-    formatter.dateFormat = "yyyy-MM-dd"
-    // A retained page rolls forward when a new day begins.
-    return formatter.string(from: max(firstDate, Date()))
-  }
+  @State private var editor: GolfRoundEditorRoute?
   private var enabled: Bool { scenePhase == .active && store.selectedTab == 4 }
-  private var requestID: String {
-    "\(enabled)|\(store.serverURL)|\(settings.value)|\(localDate)|\(refresh)|\(store.forecastRefresh)"
-  }
   var body: some View {
     NavigationStack {
       ScrollView {
         VStack(alignment: .leading, spacing: 16) {
-          controls
-          if let error = model.error {
-            Text(error).font(.callout).foregroundStyle(.secondary)
-            Button("Try again") { refresh += 1 }
+          VStack(alignment: .leading, spacing: 10) {
+            Label("Your next rounds", systemImage: "flag.fill").font(.title2.bold())
+            Text(
+              "Your tee times and course forecasts, all in one place."
+            )
+            .font(.subheadline).foregroundStyle(.secondary)
+            Button {
+              editor = GolfRoundEditorRoute()
+            } label: {
+              Label("Add tee time", systemImage: "plus")
+                .frame(maxWidth: .infinity).padding(.vertical, 4)
+            }
+            .buttonStyle(.borderedProminent).accessibilityIdentifier("golfAddRound")
+          }.padding().background(
+            Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
+          let upcoming = settings.rounds.filter { $0.availability() != .passed }
+          if upcoming.isEmpty {
+            ContentUnavailableView(
+              "No upcoming tee times", systemImage: "calendar.badge.plus",
+              description: Text("Find a Canadian course or drop a pin to plan your first round.")
+            )
+            .accessibilityIdentifier("golfEmptyRounds")
           }
-          if let outlook = model.outlook,
-            outlook.latitude == settings.value.latitude,
-            outlook.longitude == settings.value.longitude,
-            outlook.limits == settings.value.limits, outlook.timeZone == settings.value.timeZone
-          {
-            if let run = outlook.runTime {
-              Text("Model issued \(golfDate(run, zone: zone, pattern: "EEE MMM d, HH:mm"))")
-                .font(.caption).foregroundStyle(.secondary)
-            }
-            ForEach(outlook.days) { day in
-              if let narrative = model.narratives[day.id] {
-                GolfDayCard(
-                  day: day, narrative: narrative, outlook: outlook, zone: zone,
-                  server: store.serverURL.absoluteString)
-              }
-            }
-            DisclosureGroup("About the outlook & data") {
-              VStack(alignment: .leading, spacing: 8) {
-                Text(
-                  "Five outlooks: Excellent, Good, Mixed, Poor and Very poor. Excellent means comfortable temperatures, light wind, little or no rain and comfortable margins inside your preferences. Good allows mild drawbacks or a brief small exceedance. Missing or stale data is not assigned an unhappy face."
-                )
-                if outlook.ruleVersion == "golf-fit-v4" {
-                  Text(outlook.scoreMeaning)
-                } else {
-                  Text(
-                    "The server needs the five-level Golf update before an outlook face can be shown. The available weather and preference checks remain below."
-                  )
-                }
-                Text(outlook.method)
-                if let context = outlook.regionalContext {
-                  Text(
-                    "Regional rain probability: \(context.name), \(context.distanceKm.formatted(.number.precision(.fractionLength(1)))) km from the pin; issued \(golfDate(context.issuedAt, zone: zone, pattern: "EEE MMM d, HH:mm")).\(context.stale ? " Update overdue." : "")"
-                  )
-                } else {
-                  Text(
-                    "No nearby regional rain-probability forecast is available. It is not inferred from precipitation amounts."
-                  )
-                }
-                Text(
-                  "The model describes a grid cell, not the exact conditions on a fairway. Check warnings and course guidance; this does not assess lightning, drainage or whether the course is open."
-                )
-                Text(
-                  "On supported iPhones with Apple Intelligence enabled, explanations are written on this device. Otherwise, a rules-based description is shown. No cloud AI is used."
-                )
-              }.font(.footnote).foregroundStyle(.secondary).padding(.top, 8)
-            }
-          } else if model.loading {
-            ProgressView("Loading the point forecast…")
-              .frame(maxWidth: .infinity).padding(.vertical, 32)
-              .accessibilityIdentifier("golfInitialLoading")
+          ForEach(upcoming) { round in
+            roundCard(round)
           }
+          let past = settings.rounds.filter { $0.availability() == .passed }
+          if !past.isEmpty {
+            DisclosureGroup("Past tee times (\(past.count))") {
+              VStack(spacing: 16) {
+                ForEach(past.reversed()) { round in roundCard(round) }
+              }.padding(.top, 12)
+            }
+          }
+          Text("Saved on this device · weather planning only, not a course booking.")
+            .font(.caption).foregroundStyle(.secondary)
         }.padding()
       }
       .background(Color(.systemGroupedBackground))
       .navigationTitle("Golf")
       .navigationBarTitleDisplayMode(.inline)
       .refreshable { refresh += 1 }
-      .sheet(isPresented: $pickingLocation) { GolfLocationPicker(settings: settings) }
-      .sheet(isPresented: $pickingTime) {
-        GolfSchedulePicker(settings: settings, firstDate: $firstDate)
+      .toolbar {
+        ToolbarItem(placement: .primaryAction) {
+          NavigationLink {
+            GolfSettingsScreen(settings: settings)
+          } label: {
+            Label("Weather limits", systemImage: "slider.horizontal.3")
+          }.accessibilityIdentifier("golfLimitsLink")
+        }
       }
-      .task(id: requestID) {
-        guard enabled else {
+      .sheet(item: $editor) { route in GolfRoundEditor(settings: settings, route: route) }
+    }
+  }
+  private func roundCard(_ round: GolfRound) -> some View {
+    GolfSavedRoundCard(
+      round: round, settings: settings, enabled: enabled,
+      refreshID: "\(refresh)|\(store.forecastRefresh)"
+    ) {
+      editor = GolfRoundEditorRoute(round: round)
+    }
+  }
+}
+
+private struct GolfSavedRoundCard: View {
+  let round: GolfRound
+  @ObservedObject var settings: GolfSettingsStore
+  let enabled: Bool
+  let refreshID: String
+  let onEdit: () -> Void
+  @EnvironmentObject private var store: AppStore
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+  @StateObject private var model = GolfModel()
+  private var day: GolfDay? {
+    model.currentOutlook(for: round, limits: settings.value.limits)?.days.first
+  }
+  var body: some View {
+    VStack(alignment: .leading, spacing: 14) {
+      HStack(alignment: .top, spacing: 12) {
+        VStack(alignment: .leading, spacing: 5) {
+          Text(round.course.name).font(.headline).fixedSize(horizontal: false, vertical: true)
+          Text(round.course.locality).font(.caption).foregroundStyle(.secondary)
+          if let date = round.teeDate {
+            Text(golfDate(date, zone: round.course.zone, pattern: "EEE, MMM d · HH:mm z"))
+              .font(.subheadline.weight(.medium))
+          }
+        }
+        Spacer(minLength: 0)
+        if let rating = day?.outlookRating {
+          VStack(spacing: 2) {
+            GolfMoodIcon(rating: rating, issue: day?.outlookIssue).frame(width: 60, height: 60)
+            Text(rating.label).font(.caption.bold()).foregroundStyle(rating.colour)
+          }
+        }
+      }
+      if let day {
+        if let issue = day.outlookIssue {
+          Text("Main drawback: \(issue.label)").font(.caption).foregroundStyle(.secondary)
+        }
+        if let part = day.round {
+          let columns = dynamicTypeSize.isAccessibilitySize ? 1 : 3
+          LazyVGrid(
+            columns: Array(repeating: GridItem(.flexible(), alignment: .leading), count: columns),
+            alignment: .leading, spacing: 12
+          ) {
+            compactMetric(
+              "Temperature", symbol: "thermometer.medium",
+              value: part.temperatureRangeC.map { $0.map(golfNumber).joined(separator: "–") + "°C" }
+            )
+            compactMetric(
+              "Wind", symbol: "wind", value: part.maxWindKmh.map { "\(golfNumber($0)) km/h" })
+            compactMetric(
+              "Precipitation", symbol: "drop",
+              value: part.rain.map {
+                $0.minimumMm == $0.maximumMm
+                  ? "\(golfNumber($0.maximumMm)) mm"
+                  : "\(golfNumber($0.minimumMm))–\(golfNumber($0.maximumMm)) mm"
+              })
+          }
+        }
+        if day.outlookRating == nil { Text(day.status).font(.caption).foregroundStyle(.secondary) }
+        if let run = model.outlook?.runTime {
+          Text("Model issued \(golfDate(run, zone: round.course.zone, pattern: "MMM d, HH:mm z"))")
+            .font(.caption2).foregroundStyle(.secondary)
+        }
+      } else if model.loading {
+        ProgressView("Checking your round…").font(.caption)
+      } else {
+        GolfRoundStatus(round: round)
+      }
+      if let error = model.error { Text(error).font(.caption).foregroundStyle(.secondary) }
+      HStack {
+        NavigationLink {
+          GolfRoundDetail(settings: settings, roundID: round.id, model: model)
+        } label: {
+          Label("View round", systemImage: "arrow.right").font(.subheadline.weight(.semibold))
+        }.accessibilityIdentifier("golfViewRound-\(round.id)")
+        Spacer()
+        Button("Edit", systemImage: "pencil", action: onEdit).font(.subheadline)
+          .accessibilityIdentifier("golfEditRound-\(round.id)")
+      }
+    }.padding().background(
+      Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16)
+    )
+    .accessibilityElement(children: .contain).accessibilityIdentifier(
+      "golfSavedRound-\(round.id)"
+    )
+    .task(id: "\(enabled)|\(store.serverURL)|\(round)|\(settings.value.limits)|\(refreshID)") {
+      guard enabled else {
+        model.cancel()
+        return
+      }
+      await model.load(round: round, limits: settings.value.limits, api: store.api)
+    }
+  }
+  private func compactMetric(_ name: String, symbol: String, value: String?) -> some View {
+    VStack(alignment: .leading, spacing: 4) {
+      Label(name, systemImage: symbol).font(.caption2).foregroundStyle(.secondary)
+      Text(value ?? "—").font(.caption.weight(.medium))
+    }.frame(maxWidth: .infinity, alignment: .leading)
+  }
+}
+
+private struct GolfRoundStatus: View {
+  let round: GolfRound
+  var body: some View {
+    VStack(alignment: .leading, spacing: 5) {
+      Label(title, systemImage: round.availability() == .passed ? "checkmark.circle" : "clock")
+        .font(.subheadline.weight(.semibold))
+      Text(message).font(.caption).foregroundStyle(.secondary)
+    }.accessibilityIdentifier("golfRoundStatus")
+  }
+  private var title: String {
+    switch round.availability() {
+    case .pending: "Forecast pending"
+    case .passed: "Tee time has passed"
+    case .invalid: "Check tee time"
+    case .ready: "Forecast unavailable"
+    }
+  }
+  private var message: String {
+    switch round.availability() {
+    case .pending: "Your round is saved. Check back within six days of the tee time for a forecast."
+    case .passed: "Kept in your saved rounds. Edit to plan another time, or delete this round."
+    case .invalid: "Choose a valid course-local date and time."
+    case .ready: "Your round is saved. Refresh to check for weather data."
+    }
+  }
+}
+
+private struct GolfRoundDetail: View {
+  @ObservedObject var settings: GolfSettingsStore
+  let roundID: UUID
+  @ObservedObject var model: GolfModel
+  @EnvironmentObject private var store: AppStore
+  @Environment(\.scenePhase) private var scenePhase
+  @Environment(\.dismiss) private var dismiss
+  @State private var editor: GolfRoundEditorRoute?
+  @State private var refresh = 0
+  private var round: GolfRound? { settings.rounds.first { $0.id == roundID } }
+  var body: some View {
+    ScrollView {
+      if let round {
+        VStack(alignment: .leading, spacing: 16) {
+          VStack(alignment: .leading, spacing: 6) {
+            Text(round.course.name).font(.title2.bold())
+            Text(round.course.locality).font(.subheadline).foregroundStyle(.secondary)
+            Text("Course time zone: \(round.course.timeZone)").font(.caption).foregroundStyle(
+              .secondary)
+            Text("2h before · 4h round · 1h after").font(.caption).foregroundStyle(.secondary)
+          }
+          if let outlook = model.currentOutlook(for: round, limits: settings.value.limits),
+            let day = outlook.days.first, let narrative = model.narratives[day.id]
+          {
+            GolfDayCard(
+              day: day, narrative: narrative, outlook: outlook,
+              zone: round.course.zone, server: store.serverURL.absoluteString)
+            GolfOutlookAbout(outlook: outlook, zone: round.course.zone)
+          } else if model.loading {
+            ProgressView("Loading your round forecast…").frame(maxWidth: .infinity).padding()
+          } else {
+            GolfRoundStatus(round: round)
+          }
+          if let error = model.error { Text(error).font(.callout).foregroundStyle(.secondary) }
+        }.padding()
+      }
+    }.background(Color(.systemGroupedBackground))
+      .navigationTitle("Round outlook").navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .primaryAction) {
+          if let round { Button("Edit") { editor = GolfRoundEditorRoute(round: round) } }
+        }
+      }
+      .refreshable { refresh += 1 }
+      .sheet(item: $editor) { route in GolfRoundEditor(settings: settings, route: route) }
+      .task(
+        id:
+          "\(String(describing: round))|\(settings.value.limits)|\(scenePhase)|\(store.selectedTab)|\(refresh)|\(store.forecastRefresh)"
+      ) {
+        guard let round, scenePhase == .active, store.selectedTab == 4 else {
           model.cancel()
           return
         }
-        await model.load(preferences: settings.value, firstDate: localDate, api: store.api)
-        guard !Task.isCancelled else { return }
+        await model.load(round: round, limits: settings.value.limits, api: store.api)
+        guard !Task.isCancelled, round.availability() == .ready else { return }
         await model.explain(
           server: store.serverURL.absoluteString, weeklySummary: store.forecastSummary)
       }
       .onDisappear { model.cancel() }
-    }
+      .onChange(of: settings.rounds) { _, _ in if round == nil { dismiss() } }
   }
-  private var controls: some View {
-    VStack(alignment: .leading, spacing: 10) {
-      HStack(alignment: .top) {
-        VStack(alignment: .leading, spacing: 3) {
-          Text(settings.value.siteName.isEmpty ? "Golf pin" : settings.value.siteName).font(
-            .headline)
-          Text(String(format: "%.4f, %.4f", settings.value.latitude, settings.value.longitude))
-            .font(.caption).foregroundStyle(.secondary).accessibilityIdentifier("golfCoordinates")
+}
+
+private struct GolfOutlookAbout: View {
+  let outlook: GolfOutlook
+  let zone: TimeZone
+  var body: some View {
+    DisclosureGroup("About the outlook & data") {
+      VStack(alignment: .leading, spacing: 8) {
+        Text(
+          "Five outlooks: Excellent, Good, Mixed, Poor and Very poor. Excellent needs comfortable temperatures, light wind, little or no rain and comfortable margins inside your preferences. Good allows mild drawbacks or a brief small exceedance. Missing or stale data is not assigned an unhappy face."
+        )
+        Text(outlook.scoreMeaning)
+        Text(outlook.method)
+        if let run = outlook.runTime {
+          Text("Model issued \(golfDate(run, zone: zone, pattern: "EEE MMM d, HH:mm z"))")
         }
-        Spacer()
-        Button {
-          pickingLocation = true
-        } label: {
-          Label("Map", systemImage: "mappin.and.ellipse")
+        if let context = outlook.regionalContext {
+          Text(
+            "Regional rain probability: \(context.name), \(context.distanceKm.formatted(.number.precision(.fractionLength(1)))) km from the pin; issued \(golfDate(context.issuedAt, zone: zone, pattern: "EEE MMM d, HH:mm z")).\(context.stale ? " Update overdue." : "")"
+          )
         }
-        .accessibilityIdentifier("golfChooseLocation")
-      }
-      Button {
-        pickingTime = true
-      } label: {
-        Label("Tee time \(settings.value.teeTime) · \(zone.identifier)", systemImage: "clock")
-          .font(.subheadline).multilineTextAlignment(.leading)
-      }.accessibilityIdentifier("golfChooseTime")
-      HStack {
-        Text("2h before · 4h round · 1h after").font(.caption).foregroundStyle(.secondary)
-        Spacer(minLength: 8)
-        NavigationLink {
-          GolfSettingsScreen(settings: settings)
-        } label: {
-          Label("Limits", systemImage: "slider.horizontal.3").font(.subheadline)
-        }.accessibilityIdentifier("golfLimitsLink")
-      }
-    }.padding().background(.background, in: RoundedRectangle(cornerRadius: 16))
+        Text(
+          "The model describes a grid cell, not exact fairway conditions. Check warnings and course guidance; this does not assess lightning, drainage or whether the course is open."
+        )
+        Text(
+          "On supported iPhones with Apple Intelligence enabled, explanations are written on this device. Otherwise a rules-based description is shown. No cloud AI is used."
+        )
+      }.font(.footnote).foregroundStyle(.secondary).padding(.top, 8)
+    }
   }
 }
 
@@ -149,6 +301,7 @@ private struct GolfDayCard: View {
   let outlook: GolfOutlook
   let zone: TimeZone
   let server: String
+  @State private var showingDetails = true
   private var description: GolfDescription? {
     GolfDescription.completed(
       day: day,
@@ -199,7 +352,7 @@ private struct GolfDayCard: View {
           .font(.caption2).foregroundStyle(.secondary)
         if let note = description.note { Text(note).font(.caption).foregroundStyle(.secondary) }
       }
-      DisclosureGroup("Round details") {
+      DisclosureGroup("Round details", isExpanded: $showingDetails) {
         VStack(alignment: .leading, spacing: 14) {
           ForEach(day.segments) { part in
             VStack(alignment: .leading, spacing: 5) {
@@ -247,8 +400,10 @@ private struct GolfDayCard: View {
           }
         }.padding(.top, 10)
       }.font(.subheadline)
-    }.padding().background(.background, in: RoundedRectangle(cornerRadius: 16))
-      .accessibilityElement(children: .contain).accessibilityIdentifier("golfDay-\(day.id)")
+    }.padding().background(
+      Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16)
+    )
+    .accessibilityElement(children: .contain).accessibilityIdentifier("golfDay-\(day.id)")
   }
   private func number(_ value: Double) -> String {
     value.formatted(.number.precision(.fractionLength(0...1)))
@@ -271,12 +426,24 @@ private struct GolfDayCard: View {
   }
 }
 
-/// Original-colour PNG sprites; the approved atlas is bundled, never downloaded.
+/// Original-colour PNG sprites; the approved atlases are bundled, never downloaded.
 struct GolfMoodIcon: View {
   let rating: GolfRating
   var issue: GolfIssue?
   static func image(rating: GolfRating, issue: GolfIssue?) -> UIImage? {
-    guard let atlas = UIImage(named: "GolfMoodAtlas")?.cgImage else { return nil }
+    let usesHeatAtlas = rating.column >= 2 && issue == .heat
+    guard let atlas = UIImage(named: usesHeatAtlas ? "GolfHeatAtlas" : "GolfMoodAtlas")?.cgImage
+    else { return nil }
+    if usesHeatAtlas {
+      let column = rating.column - 2
+      let left = Int((Double(column) / 3 * Double(atlas.width)).rounded())
+      let right = Int((Double(column + 1) / 3 * Double(atlas.width)).rounded())
+      guard
+        let cell = atlas.cropping(
+          to: CGRect(x: left, y: 0, width: right - left, height: atlas.height))
+      else { return nil }
+      return UIImage(cgImage: cell)
+    }
     let row = rating.column >= 2 ? (issue?.atlasRow ?? 0) : 0
     // The generated artwork has taller umbrella silhouettes. These verified
     // transparent gutters prevent drops or wisps leaking from adjacent sprites.
@@ -309,7 +476,7 @@ struct GolfMoodIcon: View {
   }
 }
 
-private func golfDate(_ date: Date, zone: TimeZone, pattern: String) -> String {
+func golfDate(_ date: Date, zone: TimeZone, pattern: String) -> String {
   let formatter = DateFormatter()
   formatter.locale = Locale(identifier: "en_CA")
   formatter.timeZone = zone
@@ -317,124 +484,6 @@ private func golfDate(_ date: Date, zone: TimeZone, pattern: String) -> String {
   return formatter.string(from: date)
 }
 
-private struct GolfLocationPicker: View {
-  let settings: GolfSettingsStore
-  @Environment(\.dismiss) private var dismiss
-  @State private var draft: GolfPreferences
-  init(settings: GolfSettingsStore) {
-    self.settings = settings
-    _draft = State(initialValue: settings.value)
-  }
-  var body: some View {
-    NavigationStack {
-      VStack(spacing: 0) {
-        ForecastLocationMapSurface(
-          regions: [], selectedID: nil, pin: draft.coordinate,
-          focus: settings.value.coordinate, focusRevision: 0,
-          onDropPin: { point in
-            draft.latitude = point.latitude
-            draft.longitude = point.longitude
-            draft.siteName = "Golf pin"
-          }, onSelectCity: { _ in })
-        VStack(alignment: .leading, spacing: 8) {
-          Text("Tap or hold anywhere to place your golf pin.").font(.subheadline)
-          Text(String(format: "%.5f, %.5f", draft.latitude, draft.longitude)).font(.caption)
-            .foregroundStyle(.secondary)
-          TextField("Location name (optional)", text: $draft.siteName).textFieldStyle(
-            .roundedBorder
-          )
-          .accessibilityIdentifier("golfSiteName")
-          Text(
-            "The server samples model data at this coordinate. Your regular forecast location won't change."
-          )
-          .font(.caption).foregroundStyle(.secondary)
-        }.padding().background(.regularMaterial)
-      }
-      .navigationTitle("Golf location").navigationBarTitleDisplayMode(.inline)
-      .toolbar {
-        ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-        ToolbarItem(placement: .confirmationAction) {
-          Button("Use pin") {
-            var next = settings.value
-            next.latitude = draft.latitude
-            next.longitude = draft.longitude
-            next.siteName = draft.siteName.trimmingCharacters(in: .whitespacesAndNewlines)
-            settings.save(next)
-            dismiss()
-          }.disabled(!draft.isValid).accessibilityIdentifier("saveGolfPin")
-        }
-      }
-    }
-  }
-}
-
-private struct GolfSchedulePicker: View {
-  let settings: GolfSettingsStore
-  @Binding var firstDate: Date
-  @Environment(\.dismiss) private var dismiss
-  @State private var day: Date
-  @State private var time: Date
-  @State private var zoneID: String
-  init(settings: GolfSettingsStore, firstDate: Binding<Date>) {
-    self.settings = settings
-    _firstDate = firstDate
-    let prefs = settings.value
-    var calendar = Calendar(identifier: .gregorian)
-    calendar.timeZone = TimeZone(identifier: prefs.timeZone) ?? .current
-    _day = State(initialValue: max(firstDate.wrappedValue, Date()))
-    _time = State(
-      initialValue: calendar.date(
-        bySettingHour: prefs.teeHour, minute: prefs.teeMinute, second: 0, of: Date()) ?? Date())
-    _zoneID = State(initialValue: prefs.timeZone)
-  }
-  private var calendar: Calendar {
-    var value = Calendar(identifier: .gregorian)
-    value.timeZone = TimeZone(identifier: zoneID) ?? .current
-    return value
-  }
-  var body: some View {
-    NavigationStack {
-      Form {
-        Section("Playing time") {
-          DatePicker(
-            "First day", selection: $day,
-            in: calendar.startOfDay(
-              for: Date())...(calendar.date(byAdding: .day, value: 6, to: Date()) ?? Date()),
-            displayedComponents: .date)
-          DatePicker("Tee time", selection: $time, displayedComponents: .hourAndMinute)
-            .accessibilityIdentifier("golfTeeTime")
-        }
-        Section("Time zone at the course") {
-          Picker("Time zone", selection: $zoneID) {
-            ForEach(TimeZone.knownTimeZoneIdentifiers, id: \.self) { Text($0).tag($0) }
-          }.pickerStyle(.navigationLink)
-          Text(
-            "Choose the course's time zone when planning a trip. The same local tee time is checked for seven days, where model and regional forecasts are available."
-          )
-          .font(.footnote).foregroundStyle(.secondary)
-        }
-        Section {
-          Text(
-            "Each round lasts four elapsed hours. We also check the two hours before and the hour after. Missing forecast coverage results in an incomplete assessment, not a guess."
-          )
-        }.font(.footnote).foregroundStyle(.secondary)
-      }
-      .environment(\.timeZone, calendar.timeZone)
-      .navigationTitle("Golf schedule").navigationBarTitleDisplayMode(.inline)
-      .toolbar {
-        ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-        ToolbarItem(placement: .confirmationAction) {
-          Button("Save") {
-            var next = settings.value
-            next.teeHour = calendar.component(.hour, from: time)
-            next.teeMinute = calendar.component(.minute, from: time)
-            next.timeZone = zoneID
-            settings.save(next)
-            firstDate = day
-            dismiss()
-          }.accessibilityIdentifier("saveGolfSchedule")
-        }
-      }
-    }
-  }
+private func golfNumber(_ value: Double) -> String {
+  value.formatted(.number.precision(.fractionLength(0...1)))
 }

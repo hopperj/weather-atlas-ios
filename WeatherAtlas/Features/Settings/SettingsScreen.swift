@@ -3,52 +3,50 @@ import SwiftUI
 struct SettingsScreen: View {
   @EnvironmentObject private var store: AppStore
   var body: some View {
-    NavigationStack {
-      Form {
-        Section {
-          NavigationLink {
-            AboutWeatherAtlasScreen(buildVersion: buildVersion)
-          } label: {
-            Label("About Weather Atlas", systemImage: "info.circle")
-          }
-          .accessibilityIdentifier("aboutWeatherAtlas")
+    Form {
+      Section {
+        NavigationLink {
+          AboutWeatherAtlasScreen(buildVersion: buildVersion)
+        } label: {
+          Label("About Weather Atlas", systemImage: "info.circle")
         }
-        Section {
-          NavigationLink {
-            DefaultForecastLocationPicker(model: store.forecast)
-          } label: {
-            LabeledContent("Default location", value: store.defaultForecastName)
-          }
-          .accessibilityLabel("Default location")
-          .accessibilityValue(store.defaultForecastName)
-          .accessibilityIdentifier("defaultForecastLocation")
-        } header: {
-          Text("Forecast")
-        } footer: {
-          Text(
-            "Used when no forecast region is chosen and your phone’s location is unavailable. Your current location takes priority when available."
-          )
-        }
-        Section("Golf") {
-          NavigationLink("Golf weather limits") {
-            GolfSettingsScreen(settings: store.golfSettings)
-          }.accessibilityIdentifier("golfSettings")
-        }
-        Section("Data & privacy") {
-          Label("Secure connection to Weather Atlas", systemImage: "lock.shield")
-          Text(
-            "Weather Atlas provides Environment Canada forecasts, model data, radar and satellite imagery over HTTPS. Your saved places are stored on this device."
-          )
-          Text(
-            "Apple Maps supplies the basemap. Forecast uses your location while that screen is open unless you choose a region. Coordinates go only to the Weather Atlas service for a nearby forecast lookup and are not saved by the app. The map requests location when you tap its location button."
-          )
-          Text(
-            "Your manually chosen golf pin, tee time and weather limits are saved on this device. Golf sends the pin, schedule and limits to Weather Atlas for its assessment; explanations use Apple Intelligence on the device, without a cloud AI service."
-          )
-        }.font(.footnote)
+        .accessibilityIdentifier("aboutWeatherAtlas")
       }
-      .navigationTitle("Settings")
+      Section {
+        NavigationLink {
+          DefaultForecastLocationPicker(model: store.forecast)
+        } label: {
+          LabeledContent("Default location", value: store.defaultForecastName)
+        }
+        .accessibilityLabel("Default location")
+        .accessibilityValue(store.defaultForecastName)
+        .accessibilityIdentifier("defaultForecastLocation")
+      } header: {
+        Text("Forecast")
+      } footer: {
+        Text(
+          "Used when no forecast region is chosen and your phone’s location is unavailable. Your current location takes priority when available."
+        )
+      }
+      Section("Golf") {
+        NavigationLink("Golf weather limits") {
+          GolfSettingsScreen(settings: store.golfSettings)
+        }.accessibilityIdentifier("golfSettings")
+      }
+      Section("Data & privacy") {
+        Label("Secure connection to Weather Atlas", systemImage: "lock.shield")
+        Text(
+          "Weather Atlas provides Environment Canada forecasts, model data, radar and satellite imagery over HTTPS. Your saved places are stored on this device."
+        )
+        Text(
+          "Apple Maps supplies the basemap. Forecast uses your location while that screen is open unless you choose a region. Coordinates go only to the Weather Atlas service for a nearby forecast lookup and are not saved by the app. The map requests location when you tap its location button."
+        )
+        Text(
+          "Your golf courses, pins, dated tee times and weather limits are saved on this device. Course search and pin verification use Apple Maps. Golf sends each round’s coordinates, local schedule and limits to Weather Atlas for its assessment; explanations use Apple Intelligence on the device, without a cloud AI service."
+        )
+      }.font(.footnote)
     }
+    .navigationTitle("Settings")
   }
   private var buildVersion: String {
     let info = Bundle.main.infoDictionary ?? [:]

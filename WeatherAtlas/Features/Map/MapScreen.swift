@@ -35,7 +35,7 @@ struct MapScreen: View {
         .sheet(item: $model.selectedStation) { StationDetailView(station: $0, api: model.api) }
         .sheet(item: $model.sampleResult) { sample in
           SampleSheet(sample: sample, fields: model.fields, api: model.api).presentationDetents([
-            .medium
+            .medium, .large,
           ])
         }
     }
@@ -532,6 +532,15 @@ private struct SampleSheet: View {
             value: value.nodata ? "No data" : metric(value.value, " \(value.unit)"))
         }
         Section { Text("Model run: \(sample.runTime.formatted())").font(.caption) }
+        Section {
+          NavigationLink("Astronomy / Clear sky at this point") {
+            AstronomyScreen(
+              api: api,
+              seed: ObservingSite(
+                name: "Map observing site", latitude: sample.latitude, longitude: sample.longitude),
+              restoreLast: false)
+          }
+        }
         Section("Nearby forecast") {
           if let nearby {
             Button {

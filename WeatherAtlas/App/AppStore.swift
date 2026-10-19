@@ -1,3 +1,4 @@
+import CoreLocation
 import SwiftUI
 import WidgetKit
 
@@ -94,6 +95,35 @@ final class AppStore: ObservableObject {
     defaults.removeObject(forKey: "serverURL")
   }
   var followsCurrentLocation: Bool { selectedRegionID.isEmpty && !locationFollowingPaused }
+
+  /// Match the forecast's chosen pin/region, never an unrelated last golf location.
+  var forecastMapFocus: CLLocationCoordinate2D {
+    if let pin = forecastMapPin, pin.regionID == selectedRegionID, pin.isValid {
+      return pin.coordinate
+    }
+    let regions = forecast.region.map { [$0] } ?? []
+    if !selectedRegionID.isEmpty {
+      if let region = (regions + forecast.regions).first(where: { $0.id == selectedRegionID }),
+        CLLocationCoordinate2DIsValid(region.coordinate)
+      {
+        return region.coordinate
+      }
+      if let place = saved.first(where: { $0.id == selectedRegionID }) {
+        let coordinate = CLLocationCoordinate2D(
+          latitude: place.latitude, longitude: place.longitude)
+        if CLLocationCoordinate2DIsValid(coordinate) { return coordinate }
+      }
+    }
+    if let region = forecast.region, CLLocationCoordinate2DIsValid(region.coordinate) {
+      return region.coordinate
+    }
+    if let place = defaultForecastLocation {
+      let coordinate = CLLocationCoordinate2D(latitude: place.latitude, longitude: place.longitude)
+      if CLLocationCoordinate2DIsValid(coordinate) { return coordinate }
+    }
+    return .init(latitude: 44.65, longitude: -63.57)  // The built-in Halifax forecast default.
+  }
+
   private var forecastSelectionKey: String { "forecastRegion:\(serverURL.absoluteString)" }
   private var locationPausedKey: String { "forecastLocationPaused:\(serverURL.absoluteString)" }
   private var forecastPinKey: String { "forecastMapPin:\(serverURL.absoluteString)" }

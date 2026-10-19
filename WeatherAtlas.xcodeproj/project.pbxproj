@@ -18,14 +18,18 @@
 		3DBA92B960EE702C4C975862 /* GolfUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56F6408AD64DB12DA08EC6D2 /* GolfUITests.swift */; };
 		438E3E8FBDF5C8046F012BE0 /* GolfScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A585BFE4C00E2DB38FC80B3F /* GolfScreen.swift */; };
 		49219EAA3810C9611BAA1352 /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADFE4845ECEB47A1A16090D4 /* AppStore.swift */; };
+		49D5CA044AFA08D9C7588A3B /* AstronomyModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89BC776DE547044060CAD001 /* AstronomyModels.swift */; };
 		4A6456F55818CB309EF42757 /* MapAppearanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0665BEC80DC093260C117860 /* MapAppearanceTests.swift */; };
 		4DD8D0ABDA543385A5CCC570 /* MapPlaybackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58BF25E22022AF105D61C803 /* MapPlaybackTests.swift */; };
 		503534DD881DC517CD3CBB89 /* ForecastLocationMapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D67830AB3CE5C257CFA1C3B4 /* ForecastLocationMapTests.swift */; };
 		5961C91300324B19534A45BA /* MapAppearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F47FB9572BAD0E6DD5E5208 /* MapAppearance.swift */; };
 		5B83870F11BC3777BDAB7374 /* ForecastLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A47051DAF1DD526A26458281 /* ForecastLocation.swift */; };
+		68DD0E9C4ABBB4618F42AF3E /* NavigationTestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 904365ED3D6805988A097899 /* NavigationTestSupport.swift */; };
+		691919E9EA68C280577A36AF /* AstronomyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B27F163F4DCAD2CAC6FD7387 /* AstronomyUITests.swift */; };
 		6C717C8ACE296EC246164FCA /* ForecastScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3A2F854F136DF82F58C09AB /* ForecastScreen.swift */; };
 		6E9DBC7D170376D7DFFE3BF3 /* WeatherModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E594EAA66F1639EE222A261 /* WeatherModels.swift */; };
 		70311369146CD733C88B5545 /* ForecastLocationMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81C1AA9AD2432BFC1B4AA246 /* ForecastLocationMap.swift */; };
+		7397B6F8445B3A5267005F28 /* AstronomyScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99E44B87287B18D1FFCB38ED /* AstronomyScreen.swift */; };
 		899DB6FB4FB5313715574872 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CCC97C1112C1EDE1C8D586A7 /* Assets.xcassets */; };
 		8F9ABD0425624E6467ACE1FF /* GolfDescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A507F63C39C29689D0115F /* GolfDescription.swift */; };
 		90FE96FF488C8FB0A1F2AF89 /* MapPlayback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 796EF860189351D16FCB9744 /* MapPlayback.swift */; };
@@ -37,9 +41,12 @@
 		A9451E2C587A000E9D3293DA /* GolfNarrative.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AC923F767A14DE89ADEAF99 /* GolfNarrative.swift */; };
 		AB71BED30BE9669C6068B878 /* GolfSettingsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC7BDF04C57C959996AF369F /* GolfSettingsScreen.swift */; };
 		B294EC6C9ABACA8ACBE676B7 /* ForecastRefresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB7E8F6D49134B9A72488209 /* ForecastRefresh.swift */; };
+		B2D75017D67C4014EA4E479E /* GolfRoundEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1C61E98C1E62895B86220E /* GolfRoundEditor.swift */; };
+		B6F6E6A2195279A966840590 /* GolfCourseSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96483BA7837AE2DD8113A960 /* GolfCourseSearch.swift */; };
 		B90E9511DEC10A3ADA7522A1 /* NaturalEarthCoastlines.geojson in Resources */ = {isa = PBXBuildFile; fileRef = C211C1D9D0DBB00F67819B0A /* NaturalEarthCoastlines.geojson */; };
 		BA74B979E0EE3753113084C9 /* ForecastSummaryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F2DAA529093219504E4DCA0 /* ForecastSummaryTests.swift */; };
 		BE119DD6C93FAE1DDBB5E8E5 /* ReferenceCoastlines.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66284BF8FA559AF262B9B7DD /* ReferenceCoastlines.swift */; };
+		C10FA4FD50043144F48B53BE /* AstronomyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000B82C25D62569EFCD8607D /* AstronomyTests.swift */; };
 		C3662ED9F6C3A735131AB63B /* PermissionConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6081ACAF5D9A1055C8520EE /* PermissionConfigurationTests.swift */; };
 		D4A0FCFB4E0D079A37D59FC0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DF2409A98F53EDF2189954F /* ContentView.swift */; };
 		D6E6C6E91E0F5AE5CF6C6DBD /* MapScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54311D4172DE7F3F2FFE3136 /* MapScreen.swift */; };
@@ -47,12 +54,14 @@
 		E4BF7E8A1E491DC86F855918 /* ForecastRefreshTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392FA965DE3CD44AC3FBA39F /* ForecastRefreshTests.swift */; };
 		E551522E4F81A0C742D9ECE5 /* ForecastLocationName.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF50C81B39E965AC4EB98F74 /* ForecastLocationName.swift */; };
 		E74DF90C8E9FA0C5B27CEC99 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 86E5A22C1C811A564978169F /* PrivacyInfo.xcprivacy */; };
+		E80CFE615864ABD873A2D531 /* CurrentForecastPrecipitationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2FFB896C03133461D317B67 /* CurrentForecastPrecipitationTests.swift */; };
 		E96C1094F1F64FA659F22F7F /* GolfModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C79A4206CA5C63735416C6F /* GolfModels.swift */; };
 		E9A8F6ACFB8A89A4742655C4 /* WeatherInsights.swift in Sources */ = {isa = PBXBuildFile; fileRef = D18E2D43E46DC3C42388BD6B /* WeatherInsights.swift */; };
 		F21D347BACE397B8F3EBD1C4 /* WidgetData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42AC39ED52733D4CDBF504E8 /* WidgetData.swift */; };
 		F2E70EB0C37110C37D66BDB5 /* WidgetData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42AC39ED52733D4CDBF504E8 /* WidgetData.swift */; };
 		F4061B808D07425AAC1C60FB /* WeatherInsightsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5074F574A67BA1100D68472 /* WeatherInsightsTests.swift */; };
 		F421A333B30AD5AA82FC4B76 /* SavedScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A5F59141190625D325810F8 /* SavedScreen.swift */; };
+		F4DB148484009F9A26D0EB46 /* GolfRoundTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 653E7EA94E64989F7642F186 /* GolfRoundTests.swift */; };
 		F9C4EAC6BEE2646B645006BD /* MapScreenModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C44B58C98FDCBCF058A56CA6 /* MapScreenModel.swift */; };
 /* End PBXBuildFile section */
 
@@ -95,6 +104,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		000B82C25D62569EFCD8607D /* AstronomyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AstronomyTests.swift; sourceTree = "<group>"; };
 		0665BEC80DC093260C117860 /* MapAppearanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapAppearanceTests.swift; sourceTree = "<group>"; };
 		0E594EAA66F1639EE222A261 /* WeatherModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherModels.swift; sourceTree = "<group>"; };
 		2A5F59141190625D325810F8 /* SavedScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedScreen.swift; sourceTree = "<group>"; };
@@ -112,9 +122,11 @@
 		5DF2409A98F53EDF2189954F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		5EB91E095841DE3D67A1F951 /* WeatherAtlasWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherAtlasWidgets.swift; sourceTree = "<group>"; };
 		6139E8F332A4A92DC8619ED9 /* WeatherAtlasTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = WeatherAtlasTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		653E7EA94E64989F7642F186 /* GolfRoundTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GolfRoundTests.swift; sourceTree = "<group>"; };
 		65EF36CD02A92F7851C8F239 /* MapSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapSurface.swift; sourceTree = "<group>"; };
 		66284BF8FA559AF262B9B7DD /* ReferenceCoastlines.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReferenceCoastlines.swift; sourceTree = "<group>"; };
 		6AC923F767A14DE89ADEAF99 /* GolfNarrative.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GolfNarrative.swift; sourceTree = "<group>"; };
+		6E1C61E98C1E62895B86220E /* GolfRoundEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GolfRoundEditor.swift; sourceTree = "<group>"; };
 		6F2DAA529093219504E4DCA0 /* ForecastSummaryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForecastSummaryTests.swift; sourceTree = "<group>"; };
 		6F47FB9572BAD0E6DD5E5208 /* MapAppearance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapAppearance.swift; sourceTree = "<group>"; };
 		748B33D682E9D426DB26B698 /* WeatherAtlasWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = WeatherAtlasWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -124,6 +136,10 @@
 		82689BC2A39CEDD4F3FC2797 /* CoastlineSource.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CoastlineSource.txt; sourceTree = "<group>"; };
 		854C8DF2D6BE605CA6F61161 /* WeatherAtlasUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherAtlasUITests.swift; sourceTree = "<group>"; };
 		86E5A22C1C811A564978169F /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		89BC776DE547044060CAD001 /* AstronomyModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AstronomyModels.swift; sourceTree = "<group>"; };
+		904365ED3D6805988A097899 /* NavigationTestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationTestSupport.swift; sourceTree = "<group>"; };
+		96483BA7837AE2DD8113A960 /* GolfCourseSearch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GolfCourseSearch.swift; sourceTree = "<group>"; };
+		99E44B87287B18D1FFCB38ED /* AstronomyScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AstronomyScreen.swift; sourceTree = "<group>"; };
 		A47051DAF1DD526A26458281 /* ForecastLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForecastLocation.swift; sourceTree = "<group>"; };
 		A585BFE4C00E2DB38FC80B3F /* GolfScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GolfScreen.swift; sourceTree = "<group>"; };
 		A6081ACAF5D9A1055C8520EE /* PermissionConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionConfigurationTests.swift; sourceTree = "<group>"; };
@@ -131,6 +147,7 @@
 		ACA23BE9CE00339A6F8D1BD6 /* WeatherAtlas.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WeatherAtlas.entitlements; sourceTree = "<group>"; };
 		ADFE4845ECEB47A1A16090D4 /* AppStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStore.swift; sourceTree = "<group>"; };
 		AF50C81B39E965AC4EB98F74 /* ForecastLocationName.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForecastLocationName.swift; sourceTree = "<group>"; };
+		B27F163F4DCAD2CAC6FD7387 /* AstronomyUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AstronomyUITests.swift; sourceTree = "<group>"; };
 		B74EC00C970E5BFE7C627A9C /* WeatherAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherAPI.swift; sourceTree = "<group>"; };
 		C0A507F63C39C29689D0115F /* GolfDescription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GolfDescription.swift; sourceTree = "<group>"; };
 		C211C1D9D0DBB00F67819B0A /* NaturalEarthCoastlines.geojson */ = {isa = PBXFileReference; path = NaturalEarthCoastlines.geojson; sourceTree = "<group>"; };
@@ -144,6 +161,7 @@
 		D67830AB3CE5C257CFA1C3B4 /* ForecastLocationMapTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForecastLocationMapTests.swift; sourceTree = "<group>"; };
 		D991F9B870A4656392DC1783 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		DE7D3E785B14700C0B1D0C3F /* MapFeatures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapFeatures.swift; sourceTree = "<group>"; };
+		E2FFB896C03133461D317B67 /* CurrentForecastPrecipitationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentForecastPrecipitationTests.swift; sourceTree = "<group>"; };
 		E6AAFC1C16287970F73D2216 /* ForecastSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForecastSummary.swift; sourceTree = "<group>"; };
 		EC7BDF04C57C959996AF369F /* GolfSettingsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GolfSettingsScreen.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -152,9 +170,11 @@
 		078754FBAF5A24507B1AD2E3 /* Golf */ = {
 			isa = PBXGroup;
 			children = (
+				96483BA7837AE2DD8113A960 /* GolfCourseSearch.swift */,
 				C0A507F63C39C29689D0115F /* GolfDescription.swift */,
 				3C79A4206CA5C63735416C6F /* GolfModels.swift */,
 				6AC923F767A14DE89ADEAF99 /* GolfNarrative.swift */,
+				6E1C61E98C1E62895B86220E /* GolfRoundEditor.swift */,
 				A585BFE4C00E2DB38FC80B3F /* GolfScreen.swift */,
 				EC7BDF04C57C959996AF369F /* GolfSettingsScreen.swift */,
 			);
@@ -179,6 +199,14 @@
 				B74EC00C970E5BFE7C627A9C /* WeatherAPI.swift */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		0C5983FE92FB6FEF9FDC87F0 /* Astronomy */ = {
+			isa = PBXGroup;
+			children = (
+				99E44B87287B18D1FFCB38ED /* AstronomyScreen.swift */,
+			);
+			path = Astronomy;
 			sourceTree = "<group>";
 		};
 		11E0203CC84CB9BADD34A596 /* WeatherAtlas */ = {
@@ -240,9 +268,12 @@
 		608FFCB1084D2B96385027C4 /* WeatherAtlasTests */ = {
 			isa = PBXGroup;
 			children = (
+				000B82C25D62569EFCD8607D /* AstronomyTests.swift */,
+				E2FFB896C03133461D317B67 /* CurrentForecastPrecipitationTests.swift */,
 				D67830AB3CE5C257CFA1C3B4 /* ForecastLocationMapTests.swift */,
 				392FA965DE3CD44AC3FBA39F /* ForecastRefreshTests.swift */,
 				6F2DAA529093219504E4DCA0 /* ForecastSummaryTests.swift */,
+				653E7EA94E64989F7642F186 /* GolfRoundTests.swift */,
 				AAC5C57C46F95CE42D1F8AD3 /* GolfTests.swift */,
 				0665BEC80DC093260C117860 /* MapAppearanceTests.swift */,
 				58BF25E22022AF105D61C803 /* MapPlaybackTests.swift */,
@@ -293,6 +324,7 @@
 		BB9EB172196EA73ABA2A3503 /* Features */ = {
 			isa = PBXGroup;
 			children = (
+				0C5983FE92FB6FEF9FDC87F0 /* Astronomy */,
 				B16BBABD3925B5D39BBA44A8 /* Forecast */,
 				078754FBAF5A24507B1AD2E3 /* Golf */,
 				CFA3DBD1D2D1699DC69B4DAE /* Map */,
@@ -305,6 +337,7 @@
 		CD8378C6280B9C862B2263B1 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				89BC776DE547044060CAD001 /* AstronomyModels.swift */,
 				DE7D3E785B14700C0B1D0C3F /* MapFeatures.swift */,
 				D18E2D43E46DC3C42388BD6B /* WeatherInsights.swift */,
 				0E594EAA66F1639EE222A261 /* WeatherModels.swift */,
@@ -328,7 +361,9 @@
 		DDCAD977D172AD3867EDAE20 /* WeatherAtlasUITests */ = {
 			isa = PBXGroup;
 			children = (
+				B27F163F4DCAD2CAC6FD7387 /* AstronomyUITests.swift */,
 				56F6408AD64DB12DA08EC6D2 /* GolfUITests.swift */,
+				904365ED3D6805988A097899 /* NavigationTestSupport.swift */,
 				854C8DF2D6BE605CA6F61161 /* WeatherAtlasUITests.swift */,
 			);
 			path = WeatherAtlasUITests;
@@ -481,7 +516,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				691919E9EA68C280577A36AF /* AstronomyUITests.swift in Sources */,
 				3DBA92B960EE702C4C975862 /* GolfUITests.swift in Sources */,
+				68DD0E9C4ABBB4618F42AF3E /* NavigationTestSupport.swift in Sources */,
 				9102A2E90C90955F53E2469C /* WeatherAtlasUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -490,9 +527,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C10FA4FD50043144F48B53BE /* AstronomyTests.swift in Sources */,
+				E80CFE615864ABD873A2D531 /* CurrentForecastPrecipitationTests.swift in Sources */,
 				503534DD881DC517CD3CBB89 /* ForecastLocationMapTests.swift in Sources */,
 				E4BF7E8A1E491DC86F855918 /* ForecastRefreshTests.swift in Sources */,
 				BA74B979E0EE3753113084C9 /* ForecastSummaryTests.swift in Sources */,
+				F4DB148484009F9A26D0EB46 /* GolfRoundTests.swift in Sources */,
 				118BF770E8B9F0449D3DC75E /* GolfTests.swift in Sources */,
 				4A6456F55818CB309EF42757 /* MapAppearanceTests.swift in Sources */,
 				4DD8D0ABDA543385A5CCC570 /* MapPlaybackTests.swift in Sources */,
@@ -507,6 +547,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				49219EAA3810C9611BAA1352 /* AppStore.swift in Sources */,
+				49D5CA044AFA08D9C7588A3B /* AstronomyModels.swift in Sources */,
+				7397B6F8445B3A5267005F28 /* AstronomyScreen.swift in Sources */,
 				D4A0FCFB4E0D079A37D59FC0 /* ContentView.swift in Sources */,
 				99A722C18FA9253D43A9E5CF /* ForecastInsightsView.swift in Sources */,
 				5B83870F11BC3777BDAB7374 /* ForecastLocation.swift in Sources */,
@@ -515,9 +557,11 @@
 				B294EC6C9ABACA8ACBE676B7 /* ForecastRefresh.swift in Sources */,
 				6C717C8ACE296EC246164FCA /* ForecastScreen.swift in Sources */,
 				12ADE33A17E56A916016D7DA /* ForecastSummary.swift in Sources */,
+				B6F6E6A2195279A966840590 /* GolfCourseSearch.swift in Sources */,
 				8F9ABD0425624E6467ACE1FF /* GolfDescription.swift in Sources */,
 				E96C1094F1F64FA659F22F7F /* GolfModels.swift in Sources */,
 				A9451E2C587A000E9D3293DA /* GolfNarrative.swift in Sources */,
+				B2D75017D67C4014EA4E479E /* GolfRoundEditor.swift in Sources */,
 				438E3E8FBDF5C8046F012BE0 /* GolfScreen.swift in Sources */,
 				AB71BED30BE9669C6068B878 /* GolfSettingsScreen.swift in Sources */,
 				5961C91300324B19534A45BA /* MapAppearance.swift in Sources */,
@@ -599,7 +643,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				CURRENT_PROJECT_VERSION = 25;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -630,6 +673,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 26;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -648,7 +692,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -685,7 +729,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				CURRENT_PROJECT_VERSION = 25;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -716,6 +759,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 26;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -728,7 +772,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

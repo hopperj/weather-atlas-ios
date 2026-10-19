@@ -959,11 +959,21 @@ final class PrecipitationBehaviorTests: XCTestCase {
     }
   }
 
-  func testIssuedAmountsKeepRangesSnowUnitsAndZero() {
-    for amount in ["5 to 10 mm", "2 cm", "0 mm"] {
+  func testIssuedAmountsKeepRangesSnowUnitsAndAvoidRiskWithZero() {
+    for amount in ["5 to 10 mm", "0 to 2 mm", "2 cm", "<0.1 mm", "Trace"] {
       XCTAssertEqual(
         period(amount: amount).precipitationDescription(estimatedMm: 99, loading: true),
         "Precipitation: \(amount)")
+      XCTAssertFalse(period(amount: amount).needsPrecipitationEstimate)
+    }
+    for amount in ["0 mm", "0.0 mm", "0 cm", " 0.00 MM ", "0"] {
+      XCTAssertEqual(
+        period(amount: amount).precipitationDescription(estimatedMm: 99),
+        "Precipitation: Amount uncertain")
+      XCTAssertEqual(
+        period(pop: 0, amount: amount).precipitationDescription(estimatedMm: 99),
+        "Precipitation: \(amount.trimmingCharacters(in: .whitespacesAndNewlines))")
+      XCTAssertEqual(period(amount: amount).precipitationAmount, amount)
       XCTAssertFalse(period(amount: amount).needsPrecipitationEstimate)
     }
     // An issued amount remains useful even when the bulletin omits POP.
@@ -976,7 +986,7 @@ final class PrecipitationBehaviorTests: XCTestCase {
     for pop in [nil, 1.0, 30, 100] as [Double?] {
       XCTAssertEqual(
         period(pop: pop).precipitationDescription(estimatedMm: nil),
-        "Precipitation: amount unavailable")
+        "Precipitation: Amount uncertain")
       XCTAssertEqual(
         period(pop: pop).precipitationDescription(estimatedMm: nil, loading: true),
         "Precipitation: loading amount…")
@@ -990,7 +1000,7 @@ final class PrecipitationBehaviorTests: XCTestCase {
     XCTAssertTrue(period(amount: " \n ").needsPrecipitationEstimate)
   }
 
-  func testModelAmountsAreIndependentOfProbabilityAndCondition() {
+  func testPositiveModelAmountsRemainIndependentButZeroRiskLabelsAreUncertain() {
     for pop in [nil, 0, 30] as [Double?] {
       for condition in ["Periods of rain", "Showers", "Snow", "Sunny", ""] {
         let forecast = period(pop: pop, condition: condition)
@@ -999,7 +1009,10 @@ final class PrecipitationBehaviorTests: XCTestCase {
           forecast.precipitationDescription(estimatedMm: 10.16), "Precipitation: 10.2 mm")
         XCTAssertEqual(
           forecast.precipitationDescription(estimatedMm: 0.05), "Precipitation: <0.1 mm")
-        XCTAssertEqual(forecast.precipitationDescription(estimatedMm: 0), "Precipitation: 0 mm")
+        let risk = pop.map { $0 > 0 } ?? ["Periods of rain", "Showers", "Snow"].contains(condition)
+        XCTAssertEqual(
+          forecast.precipitationDescription(estimatedMm: 0),
+          risk ? "Precipitation: Amount uncertain" : "Precipitation: 0 mm")
       }
     }
   }
@@ -1007,7 +1020,7 @@ final class PrecipitationBehaviorTests: XCTestCase {
   func testEstimatesDistinguishTraceZeroAndMissingAmounts() {
     XCTAssertEqual(
       period().precipitationDescription(estimatedMm: 0),
-      "Precipitation: 0 mm")
+      "Precipitation: Amount uncertain")
     XCTAssertEqual(
       period().precipitationDescription(estimatedMm: 0.05),
       "Precipitation: <0.1 mm")
@@ -1017,7 +1030,7 @@ final class PrecipitationBehaviorTests: XCTestCase {
     for amount in [-1, Double.nan, Double.infinity] {
       XCTAssertEqual(
         period().precipitationDescription(estimatedMm: amount),
-        "Precipitation: amount unavailable")
+        "Precipitation: Amount uncertain")
     }
   }
 
@@ -1121,7 +1134,7 @@ final class PrecipitationBehaviorTests: XCTestCase {
     XCTAssertNil(model.precipitation)
     XCTAssertFalse(model.precipitationLoading)
     XCTAssertEqual(
-      model.precipitationDescription(for: rainy), "Precipitation: amount unavailable")
+      model.precipitationDescription(for: rainy), "Precipitation: Amount uncertain")
     XCTAssertNotNil(model.precipitationError)
     XCTAssertTrue(model.refreshIncomplete)
     XCTAssertNil(model.lastUpdated)
@@ -1173,8 +1186,213 @@ private final class ForecastTestLocationDriver: ForecastLocationDriving {
   func stopUpdatingLocation() { stops += 1 }
 }
 
+final class OfficialHourlyForecastTests: XCTestCase {
+  static let payload = Data(
+    """
+    {"regionId":"kentville","source":"ECCC official hourly forecast",
+     "generatedAt":"2026-10-18T01:18:50.021330Z","issuedAt":"2026-10-18T01:00:00Z",
+     "providerLocation":"Kentville","timeZone":"AST4ADT","stale":false,
+     "hours":[
+       {"time":"2026-10-18T02:00:00.000Z","condition":"Clear","popPercent":0,"temperatureC":1,"iconCode":"30"},
+       {"time":"2026-10-18T00:00:00-03:00","condition":"Chance of showers","popPercent":30,"temperatureC":0,"iconCode":"36"}]}
+    """.utf8)
+  private func decoded() throws -> OfficialHourlyForecast {
+    try WeatherAPI.decoder().decode(OfficialHourlyForecast.self, from: Self.payload)
+  }
+  private func model(at now: Date, regionID: String = "kentville", amount: Double? = 0)
+    -> HourlyForecast
+  {
+    let start = Date(timeIntervalSince1970: floor(now.timeIntervalSince1970 / 3600) * 3600)
+    return HourlyForecast(
+      regionId: regionID, source: "ECCC GDPS", generatedAt: now, start: start,
+      end: start.addingTimeInterval(72 * 3600), availableHours: 72, completeHours: 72,
+      hours: (0..<72).map {
+        let time = start.addingTimeInterval(Double($0) * 3600)
+        return HourlyForecastHour(
+          time: time, runTime: start.addingTimeInterval(-6 * 3600),
+          precipitationStart: time.addingTimeInterval(-3600), status: "complete",
+          temperatureC: 4.5, relativeHumidityPercent: 55, precipitationMm: amount,
+          windKmh: 20, gustKmh: 40)
+      })
+  }
+
+  func testKentvilleClearHourlyOverridesRainyPeriodWithoutInventingPOPOrIconsForGaps() throws {
+    let official = try decoded()
+    let time = try XCTUnwrap(ISO8601DateFormatter().date(from: "2026-10-18T01:30:00Z"))
+    let period = ForecastPeriod(
+      name: "Saturday night", start: time.addingTimeInterval(-6 * 3600),
+      end: time.addingTimeInterval(8 * 3600), temperatureC: -3, temperatureClass: "low",
+      relativeHumidityPercent: 85, popPercent: 30, precipitationAmount: nil,
+      condition: "Chance of showers")
+    XCTAssertEqual(period.weatherIcon, .rain)
+    let rows = ForecastHourPresentation.upcoming(
+      regionID: "kentville", model: model(at: time), official: official, at: time)
+    XCTAssertEqual(rows.count, 24)
+    XCTAssertEqual(
+      rows[0].time, official.hours[0].time, "Start at the first issued hour, not an empty Now card")
+    XCTAssertEqual(rows[0].condition, "Clear")
+    XCTAssertEqual(rows[0].weatherIcon, .clearNight)
+    XCTAssertEqual(rows[0].popPercent, 0)
+    XCTAssertEqual(rows[0].temperatureC, 1)
+    XCTAssertEqual(rows[0].modelPrecipitation, "0 mm")
+    XCTAssertEqual(
+      rows[1].weatherIcon, .rain,
+      "An issued shower risk must not be erased just because GDPS is dry")
+    XCTAssertEqual(rows[1].popPercent, 30)
+    XCTAssertEqual(rows[1].modelPrecipitation, "Amount uncertain")
+    XCTAssertEqual(rows[1].precipitationLabel, "Amount uncertain")
+    XCTAssertEqual(rows[1].precipitationAccessibilityLabel, "precipitation amount uncertain")
+    XCTAssertEqual(rows[1].model?.precipitationMm, 0, "Presentation must not invent rainfall")
+    XCTAssertEqual(rows[2].condition, "Conditions unavailable")
+    XCTAssertEqual(rows[2].temperatureC, 4.5)
+    XCTAssertEqual(rows[2].model?.relativeHumidityPercent, 55)
+  }
+
+  func testOfficialEndpointUsesSameOriginRegionAndRevalidatesHTTP() async throws {
+    let config = URLSessionConfiguration.ephemeral
+    config.protocolClasses = [OfficialHourlyEndpointProbe.self]
+    let api = WeatherAPI(
+      baseURL: URL(string: "https://weather.test")!, session: URLSession(configuration: config))
+    let response = try await api.officialHourlyForecast(areaID: "kentville")
+    XCTAssertEqual(response.regionId, "kentville")
+    XCTAssertEqual(response.hours[0].weatherIcon, .clearNight)
+  }
+
+  func testStaleWrongRegionAndExpiredOfficialHoursNeverBecomeHourlyConditions() throws {
+    let official = try decoded()
+    let time = official.issuedAt.addingTimeInterval(1800)
+    for rejected in [
+      OfficialHourlyForecast(
+        regionId: "elsewhere", source: official.source, generatedAt: time, issuedAt: time,
+        providerLocation: "Elsewhere", timeZone: official.timeZone, stale: false,
+        hours: official.hours),
+      OfficialHourlyForecast(
+        regionId: official.regionId, source: official.source, generatedAt: time, issuedAt: time,
+        providerLocation: official.providerLocation, timeZone: official.timeZone, stale: true,
+        hours: official.hours),
+      OfficialHourlyForecast(
+        regionId: official.regionId, source: official.source, generatedAt: time,
+        issuedAt: time.addingTimeInterval(-86401), providerLocation: official.providerLocation,
+        timeZone: official.timeZone, stale: false, hours: official.hours),
+    ] {
+      let rows = ForecastHourPresentation.upcoming(
+        regionID: "kentville", model: model(at: time), official: rejected, at: time)
+      XCTAssertEqual(rows.count, 24)
+      XCTAssertTrue(
+        rows.allSatisfy { $0.official == nil && $0.weatherIcon == .unknown && $0.popPercent == nil }
+      )
+    }
+  }
+
+  func testMissingModelRetainsOfficialConditionsAndTraceAmountsDoNotRoundToZero() throws {
+    let official = try decoded()
+    let time = official.issuedAt.addingTimeInterval(1800)
+    let rows = ForecastHourPresentation.upcoming(
+      regionID: "kentville", model: nil, official: official, at: time)
+    XCTAssertEqual(rows.count, 2, "Do not append empty cards after all available coverage")
+    XCTAssertEqual(rows[0].condition, "Clear")
+    XCTAssertEqual(rows[0].modelPrecipitation, "—")
+    XCTAssertEqual(rows[1].modelPrecipitation, "Amount uncertain")
+    for (amount, expected) in [(0.04, "<0.1 mm"), (0, "0 mm"), (1.2, "1.2 mm")] {
+      let trace = ForecastHourPresentation.upcoming(
+        regionID: "kentville", model: model(at: time, amount: amount), official: nil, at: time)
+      XCTAssertEqual(trace[0].modelPrecipitation, expected)
+      XCTAssertEqual(trace[0].weatherIcon, .unknown)
+      XCTAssertNil(trace[0].popPercent)
+    }
+    XCTAssertTrue(
+      ForecastHourPresentation.upcoming(
+        regionID: "kentville", model: model(at: time, regionID: "other"), official: nil, at: time
+      ).isEmpty)
+    XCTAssertTrue(
+      ForecastHourPresentation.upcoming(
+        regionID: "kentville", model: nil, official: official,
+        at: time.addingTimeInterval(25 * 3600)
+      ).isEmpty)
+  }
+
+  @MainActor func testOfficialHoursLoadEvenWhenModelRequestFails() async {
+    let api = ForecastTestServer(hourlyError: .server(status: 503, message: "No model"))
+    let model = ForecastModel(api: api)
+    await model.load(preferredID: "chosen", location: nil)
+    XCTAssertNil(model.hourly)
+    XCTAssertEqual(model.officialHourly?.regionId, "chosen")
+    let calls = await api.officialCalls
+    XCTAssertEqual(calls, ["chosen"])
+    let rows = ForecastHourPresentation.upcoming(
+      regionID: "chosen", model: model.hourly, official: model.officialHourly, at: Date())
+    XCTAssertEqual(rows.first?.condition, "Clear")
+    XCTAssertEqual(rows.first?.modelPrecipitation, "—")
+    XCTAssertTrue(model.refreshIncomplete)
+    XCTAssertFalse(model.officialHourlyLoading)
+  }
+
+  @MainActor func testFailedOfficialRefreshRetainsOnlyValidPriorHoursAndRecovers() async {
+    let api = ForecastTestServer()
+    let model = ForecastModel(api: api)
+    await model.load(preferredID: "chosen", location: nil)
+    let issued = model.officialHourly?.issuedAt
+    let updated = model.lastUpdated
+    await api.setOfficialError(.server(status: 404, message: "No official hourly feed"))
+    await model.load(preferredID: "chosen", location: nil)
+    XCTAssertEqual(model.officialHourly?.issuedAt, issued)
+    XCTAssertEqual(model.lastUpdated, updated)
+    XCTAssertNotNil(model.officialHourlyError)
+    XCTAssertTrue(model.refreshIncomplete)
+    await api.setOfficialError(nil)
+    await model.load(preferredID: "chosen", location: nil)
+    XCTAssertNil(model.officialHourlyError)
+    XCTAssertFalse(model.refreshIncomplete)
+    for api in [
+      ForecastTestServer(officialStale: true), ForecastTestServer(officialRegionID: "other"),
+    ] {
+      let rejected = ForecastModel(api: api)
+      await rejected.load(preferredID: "chosen", location: nil)
+      XCTAssertNotNil(rejected.officialHourlyError)
+      XCTAssertTrue(rejected.refreshIncomplete)
+    }
+  }
+
+  @MainActor func testLateOfficialResponseCannotReplaceManuallySelectedRegion() async {
+    let api = ForecastTestServer(holdOfficial: true)
+    let model = ForecastModel(api: api)
+    let pending = Task {
+      await model.load(
+        preferredID: "",
+        location: ForecastLocationFix(latitude: 45, longitude: -64, measuredAt: Date()))
+    }
+    await api.waitForOfficial()
+    await model.load(preferredID: "chosen", location: nil)
+    await api.releaseOfficial()
+    await pending.value
+    XCTAssertEqual(model.region?.id, "chosen")
+    XCTAssertEqual(model.officialHourly?.regionId, "chosen")
+  }
+}
+
+private final class OfficialHourlyEndpointProbe: URLProtocol, @unchecked Sendable {
+  override class func canInit(with request: URLRequest) -> Bool { true }
+  override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+  override func startLoading() {
+    let query = request.url.flatMap { URLComponents(url: $0, resolvingAgainstBaseURL: false) }?
+      .queryItems
+    let valid =
+      request.url?.host == "weather.test"
+      && request.url?.path == "/api/v1/forecast/official-hourly"
+      && query?.first(where: { $0.name == "area_id" })?.value == "kentville"
+      && request.value(forHTTPHeaderField: "Cache-Control") == "no-cache"
+    let response = HTTPURLResponse(
+      url: request.url!, statusCode: valid ? 200 : 400, httpVersion: nil, headerFields: nil)!
+    client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+    client?.urlProtocol(self, didLoad: OfficialHourlyForecastTests.payload)
+    client?.urlProtocolDidFinishLoading(self)
+  }
+  override func stopLoading() {}
+}
+
 actor ForecastTestServer: ForecastServing {
   private(set) var calls: [String] = []
+  private(set) var officialCalls: [String] = []
   private(set) var coordinates: [(Double, Double)] = []
   let holdNearest: Bool
   let nearestError: WeatherAPIError?
@@ -1182,6 +1400,12 @@ actor ForecastTestServer: ForecastServing {
   let precipitationError: WeatherAPIError?
   let hourlyError: WeatherAPIError?
   private var observationsError: WeatherAPIError?
+  private var officialError: WeatherAPIError?
+  let holdOfficial: Bool
+  let officialStale: Bool
+  let officialRegionID: String?
+  private var pendingOfficial: CheckedContinuation<Void, Never>?
+  private var officialArrival: CheckedContinuation<Void, Never>?
   let holdPrecipitation: Bool
   let extraRegions: [ForecastRegion]
   private var holdNextRegions: Bool
@@ -1197,7 +1421,8 @@ actor ForecastTestServer: ForecastServing {
     periods: [ForecastPeriod] = [], precipitationError: WeatherAPIError? = nil,
     hourlyError: WeatherAPIError? = nil, holdPrecipitation: Bool = false,
     extraRegions: [ForecastRegion] = [], holdRegions: Bool = false,
-    observationsError: WeatherAPIError? = nil
+    observationsError: WeatherAPIError? = nil, officialError: WeatherAPIError? = nil,
+    holdOfficial: Bool = false, officialStale: Bool = false, officialRegionID: String? = nil
   ) {
     self.holdNearest = holdNearest
     self.nearestError = nearestError
@@ -1208,6 +1433,10 @@ actor ForecastTestServer: ForecastServing {
     self.extraRegions = extraRegions
     self.holdNextRegions = holdRegions
     self.observationsError = observationsError
+    self.officialError = officialError
+    self.holdOfficial = holdOfficial
+    self.officialStale = officialStale
+    self.officialRegionID = officialRegionID
   }
   private func region(_ id: String) -> ForecastRegion {
     ForecastRegion(
@@ -1261,6 +1490,36 @@ actor ForecastTestServer: ForecastServing {
       end: Date(), availableHours: 0, completeHours: 0, hours: [])
   }
   func setObservationsError(_ error: WeatherAPIError?) { observationsError = error }
+  func setOfficialError(_ error: WeatherAPIError?) { officialError = error }
+  func officialHourlyForecast(areaID: String) async throws -> OfficialHourlyForecast {
+    officialCalls.append(areaID)
+    officialArrival?.resume()
+    officialArrival = nil
+    if holdOfficial && areaID == "nearby" {
+      await withCheckedContinuation { pendingOfficial = $0 }
+    }
+    if let officialError { throw officialError }
+    let start = Date(timeIntervalSince1970: floor(Date().timeIntervalSince1970 / 3600) * 3600)
+    return OfficialHourlyForecast(
+      regionId: officialRegionID ?? areaID, source: "ECCC official hourly forecast",
+      generatedAt: issuedAt, issuedAt: issuedAt, providerLocation: areaID,
+      timeZone: "America/Halifax", stale: officialStale,
+      hours: (0..<24).map {
+        OfficialForecastHour(
+          time: start.addingTimeInterval(Double($0) * 3600), condition: "Clear",
+          popPercent: 0, temperatureC: 10, iconCode: "30")
+      })
+  }
+  func waitForOfficial() async {
+    guard !officialCalls.isEmpty else {
+      await withCheckedContinuation { officialArrival = $0 }
+      return
+    }
+  }
+  func releaseOfficial() {
+    pendingOfficial?.resume()
+    pendingOfficial = nil
+  }
   func nearbyStations(longitude: Double, latitude: Double) async throws -> StationCollection {
     if let observationsError { throw observationsError }
     return StationCollection(generatedAt: Date(), items: [], nextOffset: nil)

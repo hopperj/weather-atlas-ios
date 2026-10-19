@@ -113,6 +113,10 @@ struct WeatherAPI: Sendable {
   func hourlyForecast(areaID: String) async throws -> HourlyForecast {
     try await get("/api/v1/forecast/hourly", query: [.init(name: "area_id", value: areaID)])
   }
+  func officialHourlyForecast(areaID: String) async throws -> OfficialHourlyForecast {
+    try await get(
+      "/api/v1/forecast/official-hourly", query: [.init(name: "area_id", value: areaID)])
+  }
   func precipitationForecast(areaID: String) async throws -> PrecipitationForecast {
     try await get("/api/v1/forecast/precipitation", query: [.init(name: "area_id", value: areaID)])
   }
@@ -188,7 +192,9 @@ struct WeatherAPI: Sendable {
     if let timeout { request.timeoutInterval = timeout }
     // The explicit forecast snapshot provides instant display. Refreshes must
     // actually check the server rather than reuse a still-fresh HTTP response.
-    if path.hasPrefix("/api/v1/forecast/") || path == "/api/v1/observations/nearby" {
+    if path.hasPrefix("/api/v1/forecast/") || path == "/api/v1/observations/nearby"
+      || path == "/api/v1/golf/outlook"
+    {
       request.cachePolicy = .reloadIgnoringLocalCacheData
       request.setValue("no-cache", forHTTPHeaderField: "Cache-Control")
     }
